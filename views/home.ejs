@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coffee Store</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <h1>Coffee Store</h1>
+    <nav>
+      <a href="/">Trang chủ</a>
+      <a href="/cart">Giỏ hàng</a>
+      <a href="/checkout">Thanh toán</a>
+      <a href="/auth/profile">Hồ sơ</a>
+      <% if (user) { %>
+        <span>👋 Xin chào, <%= user.username %>!</span>
+        <a href="/auth/logout">Đăng xuất</a>
+      <% } else { %>
+        <a href="/auth/login">Đăng nhập</a>
+        <a href="/auth/register">Đăng ký</a>
+      <% } %>
+    </nav>
+  </header>
+
+  <main>
+    <div class="search-filter-container">
+      <form action="/" method="GET">
+        <input type="text" name="search" placeholder="Tìm kiếm sản phẩm..." value="<%= typeof search !== 'undefined' ? search : '' %>">
+        <select name="category">
+          <option value="">Tất cả danh mục</option>
+          <option value="coffee" <%= category === 'coffee' ? 'selected' : '' %>>Cà phê</option>
+          <option value="tea" <%= category === 'tea' ? 'selected' : '' %>>Trà</option>
+          <option value="smoothie" <%= category === 'smoothie' ? 'selected' : '' %>>Sinh tố</option>
+          <option value="juice" <%= category === 'juice' ? 'selected' : '' %>>Nước ép</option>
+          <option value="yogurt" <%= category === 'yogurt' ? 'selected' : '' %>>Sữa chua</option>
+          <option value="water" <%= category === 'water' ? 'selected' : '' %>>Nước suối</option>
+          <option value="chocolate" <%= category === 'chocolate' ? 'selected' : '' %>>Chocolate</option>
+        </select>
+        <input type="number" name="minPrice" placeholder="Giá tối thiểu" value="<%= typeof minPrice !== 'undefined' ? minPrice : '' %>">
+        <input type="number" name="maxPrice" placeholder="Giá tối đa" value="<%= typeof maxPrice !== 'undefined' ? maxPrice : '' %>">
+        <button type="submit">Tìm kiếm</button>
+      </form>
+    </div>
+
+    <h2>Danh sách sản phẩm</h2>
+    <div class="product-grid container">
+      <% if (products && products.length > 0) { %>
+        <% products.forEach(product => { %>
+          <div class="product">
+            <img src="<%= product.image %>" alt="<%= product.name %>" width="150" style="margin: 10px">
+            <h3><%= product.name %></h3>
+            <% if (product.discount > 0) { %>
+              <p>Giá gốc: <del><%= product.price %> VND</del></p>
+              <p>Giá giảm: <%= (product.price * (1 - product.discount / 100)).toFixed(0) %> VND</p>
+            <% } else { %>
+              <p>Giá: <%= product.price %> VND</p>
+            <% } %>
+            <div class="product-buttons">
+              <button class="product-button" onclick="location.href='/product/<%= product._id %>'">Xem chi tiết</button>
+              <button class="product-button add-to-cart" data-id="<%= product._id %>">Thêm vào giỏ hàng</button>
+            </div>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <p>Không tìm thấy sản phẩm nào.</p>
+      <% } %>
+    </div>
+  </main>
+
+  <script src="/scripts.js"></script>
+</body>
+</html>

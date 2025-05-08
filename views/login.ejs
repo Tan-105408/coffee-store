@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng nhập - Coffee Store</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <h1>Coffee Store</h1>
+    <nav>
+      <a href="/">Trang chủ</a>
+      <a href="/cart">Giỏ hàng</a>
+      <a href="/checkout">Thanh toán</a>
+      <a href="/auth/profile">Hồ sơ</a>
+      <a href="/auth/login">Đăng nhập</a>
+      <a href="/auth/register">Đăng ký</a>
+    </nav>
+  </header>
+  <main>
+    <h2>Đăng nhập</h2>
+    <a href="/" style="display: inline-block; margin: 20px; color: blue; text-decoration: none;">← Quay về trang chủ</a>
+    <form action="/auth/login" method="POST">
+      <input type="text" name="username" placeholder="Tên đăng nhập" required>
+      <input type="password" name="password" placeholder="Mật khẩu" required>
+      <button type="submit" class="product-button">Đăng nhập</button>
+    </form>
+    <p>Hoặc đăng nhập bằng:</p>
+    <a href="/auth/google">Google</a> | <a href="/auth/facebook">Facebook</a>
+    <p>Chưa có tài khoản? <a href="/auth/register">Đăng ký</a></p>
+  </main>
+</body>
+</html>

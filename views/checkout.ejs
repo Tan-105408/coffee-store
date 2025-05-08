@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thanh toán - Coffee Store</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+  <header>
+    <h1>Coffee Store</h1>
+    <nav>
+      <a href="/">Trang chủ</a>
+      <a href="/cart">Giỏ hàng</a>
+      <a href="/checkout">Thanh toán</a>
+      <a href="/auth/profile">Hồ sơ</a>
+      <a href="/auth/login">Đăng nhập</a>
+      <a href="/auth/register">Đăng ký</a>
+    </nav>
+  </header>
+  <main class="checkout-container">
+    <h2>Tổng cộng: <%= total.toFixed(0) %> VND</h2>
+    <div class="cart-items">
+      <% cart.forEach(item => { %>
+        <div class="cart-item">
+          <h3><%= item.name %></h3>
+          <p>Số lượng: <%= item.quantity %></p>
+          <p>Giá: <%= item.price.toFixed(0) %> VND</p>
+          <p>Tổng: <%= item.total.toFixed(0) %> VND</p>
+        </div>
+      <% }); %>
+    </div>
+    <form action="/checkout" method="POST" id="checkout-form">
+      <input type="hidden" name="stripeToken" id="stripeToken">
+      <label for="email">Email nhận xác nhận đơn hàng:</label>
+      <input type="email" name="email" required placeholder="you@example.com">
+      <fieldset>
+        <legend>Chọn phương thức thanh toán:</legend>
+        <label>
+          <input type="radio" name="paymentMethod" value="stripe" checked>
+          Thanh toán bằng Stripe
+        </label><br>
+        <label>
+          <input type="radio" name="paymentMethod" value="zalopay">
+          Thanh toán bằng ZaloPay
+        </label><br>
+        <label>
+          <input type="radio" name="paymentMethod" value="vnpay">
+          Thanh toán bằng VNPay
+        </label>
+      </fieldset>
+      <button type="submit" class="product-button">Tiến hành thanh toán</button>
+      <a href="/" style="display: inline-block; margin-top: 20px; color: blue; text-decoration: none;">← Quay về trang chủ</a>
+    </form>
+  </main>
+  <script>
+    const stripe = Stripe("<%= process.env.STRIPE_PUBLIC_KEY %>");
+    const form = document.getElementById("checkout-form");
+    form.addEventListener("submit", async (e) => {
+      const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+      if (selectedMethod === "stripe") {
+        e.preventDefault();
+        try {
+          const { token, error } = await stripe.createToken("card", {
+            number: "4242424242424242",
+            exp_month: 12,
+            exp_year: 2025,
+            cvc: "123",
+          });
+          if (error) {
+            alert("Lỗi tạo token Stripe: " + error.message);
+            return;
+          }
+          document.getElementById("stripeToken").value = token.id;
+          form.submit();
+        } catch (error) {
+          alert("Có lỗi xảy ra khi xử lý thanh toán Stripe!");
+        }
+      }
+    });
+  </script>
+</body>
+</html>

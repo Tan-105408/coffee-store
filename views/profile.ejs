@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hồ sơ người dùng - Coffee Store</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <h1>Coffee Store</h1>
+    <nav>
+      <a href="/">Trang chủ</a>
+      <a href="/cart">Giỏ hàng</a>
+      <a href="/checkout">Thanh toán</a>
+      <a href="/auth/profile">Hồ sơ</a>
+      <a href="/auth/login">Đăng nhập</a>
+      <a href="/auth/register">Đăng ký</a>
+    </nav>
+  </header>
+  <main>
+    <h2>Hồ sơ người dùng</h2>
+    <form id="profile-form">
+      <label for="username">Tên đăng nhập:</label>
+      <input type="text" name="username" value="<%= user.username %>" required>
+      <label for="email">Email:</label>
+      <input type="email" name="email" value="<%= user.email %>" required>
+      <label for="address">Địa chỉ:</label>
+      <input type="text" name="address" value="<%= user.address %>" placeholder="Nhập địa chỉ của bạn">
+      <button type="submit" class="product-button">Cập nhật</button>
+    </form>
+    <a href="/" style="display: inline-block; margin-top: 20px; color: blue; text-decoration: none;">← Quay về trang chủ</a>
+  </main>
+  <script>
+    document.getElementById("profile-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      try {
+        const response = await fetch("/auth/profile/update", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
+          body: JSON.stringify(data),
+        });
+        const result = await response.json();
+        alert(result.message);
+      } catch (error) {
+        alert("Có lỗi xảy ra khi cập nhật hồ sơ!");
+      }
+    });
+  </script>
+</body>
+</html>
