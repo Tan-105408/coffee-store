@@ -12,9 +12,9 @@ mongoose.connect('mongodb://127.0.0.1:27017/coffee-store', {
 // Dữ liệu mẫu với tên ảnh có tiền tố "cf"
 const seedProducts = [
     { name: 'Cà phê sữa đá', price: 25000, image: '/images/cfsuada.jfif' },
-    { name: 'Cà phê đen đá', price: 20000, image: '/images/cfden.jfif' },
+    { name: 'Cà phê đen đá', price: 20000, image: '/images/cfdenda.jfif' },
     { name: 'Cà phê Espresso', price: 30000, image: '/images/cfespresso.jfif' },
-    { name: 'Cà phê Cappuccino', price: 35000, image: '/images/cfcappuccino.jfif' },
+    { name: 'Cà phê Cappuccino', price: 35000, image: '/images/cfcapuchino.jfif' },
     { name: 'Cà phê Latte', price: 40000, image: '/images/cflatte.jfif' },
     { name: 'Cà phê Mocha', price: 45000, image: '/images/cfmocha.jfif' },
     { name: 'Cà phê Macchiato', price: 47000, image: '/images/cfmacchiato.jfif' },

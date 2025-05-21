@@ -15,10 +15,17 @@
       <a href="/cart">Giỏ hàng</a>
       <a href="/checkout">Thanh toán</a>
       <a href="/auth/profile">Hồ sơ</a>
-      <a href="/auth/login">Đăng nhập</a>
-      <a href="/auth/register">Đăng ký</a>
+  
+      <% if (user) { %>
+        <span>👋 Xin chào, <%= user.username %>!</span>
+        <a href="/auth/logout">Đăng xuất</a>
+      <% } else { %>
+        <a href="/auth/login">Đăng nhập</a>
+        <a href="/auth/register">Đăng ký</a>
+      <% } %>
     </nav>
   </header>
+  
   <main class="checkout-container">
     <h2>Tổng cộng: <%= total.toFixed(0) %> VND</h2>
     <div class="cart-items">

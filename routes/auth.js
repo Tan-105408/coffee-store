@@ -9,6 +9,16 @@ const User = require("../models/User");
 const verifyToken = require("../middleware/verifyToken");
 const router = express.Router();
 
+// Thêm route GET cho trang đăng nhập
+router.get("/login", (req, res) => {
+  res.render("login"); // đảm bảo file login.ejs tồn tại trong folder views
+});
+
+// Thêm route GET cho trang đăng ký
+router.get("/register", (req, res) => {
+  res.render("register"); // đảm bảo file register.ejs tồn tại trong folder views
+});
+
 router.post("/register", async (req, res) => {
   const { username, email, password } = req.body;
   try {
@@ -38,10 +48,21 @@ router.post("/login", async (req, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
     req.session.token = token;
     res.redirect('/');
-
   } catch (error) {
     res.status(500).json({ message: "Lỗi đăng nhập", error: error.message });
   }
+});
+
+router.get("/logout", (req, res) => {
+  // Hủy session của người dùng
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Lỗi khi đăng xuất:", err);
+      return res.status(500).json({ message: "Lỗi đăng xuất" });
+    }
+    // Sau khi hủy session, chuyển về trang chủ hoặc trang login
+    res.redirect("/");
+  });
 });
 
 router.post("/forgot-password", async (req, res) => {
@@ -130,6 +151,7 @@ router.get("/profile", verifyToken, async (req, res) => {
 });
 
 router.post("/profile/update", verifyToken, async (req, res) => {
+  console.log("Request body:", req.body); // Kiểm tra dump dữ liệu gửi lên
   const { username, email, address } = req.body;
   try {
     const user = await User.findById(req.userId);

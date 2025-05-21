@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title><%= product.name %> - Chi tiết</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <h1>Coffee Store</h1>
+    <nav>
+      <a href="/">Trang chủ</a>
+      <a href="/cart">Giỏ hàng</a>
+      <% if (user) { %>
+        <span>Xin chào, <%= user.username %></span>
+        <a href="/auth/logout">Đăng xuất</a>
+      <% } else { %>
+        <a href="/auth/login">Đăng nhập</a>
+      <% } %>
+    </nav>
+  </header>
+
+  <main>
+    <h2><%= product.name %></h2>
+    <img src="<%= product.image %>" width="250">
+    <p><%= product.description || 'Không có mô tả.' %></p>
+    <% if (product.discount > 0) { %>
+      <p>Giá gốc: <del><%= product.price %> VND</del></p>
+      <p>Giá giảm: <%= (product.price * (1 - product.discount / 100)).toFixed(0) %> VND</p>
+    <% } else { %>
+      <p>Giá: <%= product.price %> VND</p>
+    <% } %>
+
+    <label for="quantity">Số lượng:</label>
+    <input type="number" id="quantity" value="1" min="1">
+
+    <button id="add-to-cart" data-id="<%= product._id %>">Thêm vào giỏ hàng</button>
+
+    <script>
+      const token = localStorage.getItem("token");
+      document.getElementById("add-to-cart").addEventListener("click", async () => {
+        const productId = document.getElementById("add-to-cart").dataset.id;
+        const quantity = parseInt(document.getElementById("quantity").value);
+        const res = await fetch("/cart/add", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ productId, quantity })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert("Đã thêm vào giỏ hàng!");
+          window.location.href = "/cart";
+        } else {
+          alert("Lỗi: " + data.message);
+        }
+      });
+    </script>
+
+    <h3>Đánh giá</h3>
+    <% if (reviews.length === 0) { %>
+      <p>Chưa có đánh giá nào.</p>
+    <% } else { %>
+      <% reviews.forEach(review => { %>
+        <div>
+          <strong><%= review.userId.username %></strong>: <%= review.content %>
+        </div>
+      <% }) %>
+    <% } %>
+  </main>
+</body>
+</html>

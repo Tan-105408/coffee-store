@@ -33,7 +33,7 @@ router.get("/:id", async (req, res) => {
       return res.status(404).json({ message: "Sản phẩm không tồn tại" });
     }
     const reviews = await Review.find({ productId: id }).populate("userId", "username");
-    res.render("products", { product, reviews });
+    res.render("product-detail", { product, reviews, user: req.user || null });
   } catch (error) {
     res.status(500).json({ message: "Lỗi lấy chi tiết sản phẩm", error: error.message });
   }

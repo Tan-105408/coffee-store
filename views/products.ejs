@@ -14,10 +14,17 @@
       <a href="/cart">Giỏ hàng</a>
       <a href="/checkout">Thanh toán</a>
       <a href="/auth/profile">Hồ sơ</a>
-      <a href="/auth/login">Đăng nhập</a>
-      <a href="/auth/register">Đăng ký</a>
+  
+      <% if (user) { %>
+        <span>👋 Xin chào, <%= user.username %>!</span>
+        <a href="/auth/logout">Đăng xuất</a>
+      <% } else { %>
+        <a href="/auth/login">Đăng nhập</a>
+        <a href="/auth/register">Đăng ký</a>
+      <% } %>
     </nav>
   </header>
+  
   <main>
     <div class="product-detail">
       <img src="<%= product.image %>" alt="<%= product.name %>" style="max-width: 300px; border-radius: 8px;">
