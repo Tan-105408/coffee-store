@@ -16,4 +16,4 @@
 
 3. Chạy server:
 
-4. Truy cập `http://localhost:3000/`
+4. Truy cập `http://localhost:3030/`
