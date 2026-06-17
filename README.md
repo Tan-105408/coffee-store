@@ -1,7 +1,7 @@
 # Coffee Store
 
 Ứng dụng bán cà phê với các tính năng:
-- Đăng ký & Đăng nhập (JWT, Google OAuth, Facebook OAuth)
+- Đăng ký & Đăng nhập (JWT, Google OAuth)
 - Quản lý sản phẩm & Giỏ hàng
 - Đánh giá sản phẩm
 - Thanh toán qua Stripe, Zalo Pay, VNPay
