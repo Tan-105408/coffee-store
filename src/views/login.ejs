@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng nhập - Coffee Store</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .auth-container {
+      max-width: 400px;
+      margin: 80px auto;
+      background: var(--white);
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+    }
+    .auth-container h2 {
+      margin-bottom: 25px;
+      color: var(--primary-color);
+    }
+    .auth-container form input {
+      margin-bottom: 15px;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    .social-login {
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+      text-align: center;
+    }
+    .google-btn {
+      display: inline-block;
+      width: 100%;
+      padding: 10px;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      text-decoration: none;
+      color: #555;
+      font-weight: 600;
+      transition: var(--transition);
+    }
+    .google-btn:hover {
+      background-color: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>☕ Coffee Store</h1>
+      <nav>
+        <a href="/">Trang chủ</a>
+        <a href="/cart">Giỏ hàng</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="auth-container">
+      <h2>Chào mừng trở lại!</h2>
+      <form action="/auth/login" method="POST">
+        <input type="text" name="username" placeholder="Tên đăng nhập" required>
+        <input type="password" name="password" placeholder="Mật khẩu" required>
+        <button type="submit" class="product-button add-to-cart" style="width: 100%;">Đăng nhập</button>
+      </form>
+      
+      <div class="social-login">
+        <p style="margin-bottom: 15px; font-size: 0.9rem; color: var(--light-text);">Hoặc tiếp tục với</p>
+        <a href="/auth/google" class="google-btn">
+          <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" alt="Google" style="width: 18px; vertical-align: middle; margin-right: 10px;">
+          Google
+        </a>
+      </div>
+
+      <p style="margin-top: 20px; text-align: center; font-size: 0.9rem;">
+        Chưa có tài khoản? <a href="/auth/register" style="color: var(--accent-color); font-weight: 600;">Đăng ký ngay</a>
+      </p>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; 2026 Coffee Store. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

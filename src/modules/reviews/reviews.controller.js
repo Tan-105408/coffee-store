@@ -4,7 +4,7 @@ const asyncHandler = require("../../middlewares/asyncHandler");
 const submitReview = asyncHandler(async (req, res) => {
   const { productId, rating, comment } = req.body;
   const review = await reviewService.createReview({
-    userId: req.user._id,
+    userId: req.user.id,
     productId,
     rating,
     comment,

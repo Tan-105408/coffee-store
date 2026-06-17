@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng ký - Coffee Store</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .auth-container {
+      max-width: 400px;
+      margin: 80px auto;
+      background: var(--white);
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+    }
+    .auth-container h2 {
+      margin-bottom: 25px;
+      color: var(--primary-color);
+    }
+    .auth-container form input {
+      margin-bottom: 15px;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>☕ Coffee Store</h1>
+      <nav>
+        <a href="/">Trang chủ</a>
+        <a href="/cart">Giỏ hàng</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="auth-container">
+      <h2>Tạo tài khoản mới</h2>
+      <form action="/auth/register" method="POST">
+        <input type="text" name="username" placeholder="Tên đăng nhập" required>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="password" name="password" placeholder="Mật khẩu" required>
+        <button type="submit" class="product-button add-to-cart" style="width: 100%;">Đăng ký</button>
+      </form>
+      
+      <p style="margin-top: 20px; text-align: center; font-size: 0.9rem;">
+        Đã có tài khoản? <a href="/auth/login" style="color: var(--accent-color); font-weight: 600;">Đăng nhập</a>
+      </p>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; 2026 Coffee Store. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

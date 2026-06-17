@@ -1,5 +1,5 @@
 const productService = require("./products.service");
-const Review = require("../../models/Review");
+const { prisma } = require("../../config/db");
 const asyncHandler = require("../../middlewares/asyncHandler");
 const ApiError = require("../../utils/ApiError");
 
@@ -13,10 +13,16 @@ const getProductDetail = asyncHandler(async (req, res) => {
   if (!product) {
     throw new ApiError(404, "Product not found");
   }
-  const reviews = await Review.find({ productId: req.params.id }).populate(
-    "userId",
-    "username"
-  );
+  const reviews = await prisma.review.findMany({
+    where: { productId: parseInt(req.params.id) },
+    include: {
+      user: {
+        select: {
+          username: true,
+        },
+      },
+    },
+  });
   res.render("product-detail", {
     product,
     reviews,

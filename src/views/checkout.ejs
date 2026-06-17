@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thanh toán - Coffee Store</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .checkout-wrapper {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      gap: 30px;
+      margin-top: 40px;
+    }
+    .order-summary {
+      background-color: var(--white);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      height: fit-content;
+    }
+    .checkout-form-container {
+      background-color: var(--white);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+    }
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    .payment-methods {
+      margin: 20px 0;
+    }
+    .payment-method-option {
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      transition: var(--transition);
+    }
+    .payment-method-option:hover {
+      border-color: var(--accent-color);
+      background-color: #fff9f5;
+    }
+    .payment-method-option input {
+      width: auto;
+      margin: 0;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>☕ Coffee Store</h1>
+      <nav>
+        <a href="/">Trang chủ</a>
+        <a href="/cart">Giỏ hàng</a>
+        <% if (user) { %>
+          <div class="user-info">
+            <span>👋 <%= user.username %></span>
+            <a href="/auth/profile">Hồ sơ</a>
+            <a href="/auth/logout">Đăng xuất</a>
+          </div>
+        <% } %>
+      </nav>
+    </div>
+  </header>
+  
+  <main class="container">
+    <h2 class="section-title" style="margin-top: 40px;">Xác nhận thanh toán</h2>
+
+    <div class="checkout-wrapper">
+      <div class="order-summary">
+        <h3 style="margin-bottom: 20px; color: var(--primary-color);">Đơn hàng của bạn</h3>
+        <div class="summary-list">
+          <% cart.forEach(item => { %>
+            <div class="summary-item">
+              <div>
+                <p style="font-weight: 600;"><%= item.name %></p>
+                <p style="font-size: 0.8rem; color: #777;">Số lượng: <%= item.quantity %></p>
+              </div>
+              <span><%= item.total.toLocaleString() %>đ</span>
+            </div>
+          <% }); %>
+        </div>
+        <div class="summary-total summary-row" style="margin-top: 20px; display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem; color: var(--accent-color);">
+          <span>Tổng cộng:</span>
+          <span><%= total.toLocaleString() %>đ</span>
+        </div>
+      </div>
+
+      <div class="checkout-form-container">
+        <form action="/checkout" method="POST" id="checkout-form">
+          
+          <div class="form-group">
+            <label for="email">Email nhận thông báo:</label>
+            <input type="email" name="email" id="email" required placeholder="example@gmail.com" value="<%= user ? user.email : '' %>">
+          </div>
+
+          <div class="payment-methods">
+            <h4 style="margin-bottom: 15px;">Chọn phương thức thanh toán</h4>
+            
+            <label class="payment-method-option">
+              <input type="radio" name="paymentMethod" value="cash" checked>
+              <div>
+                <p style="font-weight: 600;">Thanh toán tiền mặt</p>
+                <p style="font-size: 0.8rem; color: #777;">Thanh toán khi nhận hàng (COD)</p>
+              </div>
+            </label>
+
+            <label class="payment-method-option">
+              <input type="radio" name="paymentMethod" value="vnpay">
+              <div>
+                <p style="font-weight: 600;">Cổng VNPay</p>
+                <p style="font-size: 0.8rem; color: #777;">Thẻ nội địa, QR Code ngân hàng</p>
+              </div>
+            </label>
+          </div>
+
+          <button type="submit" class="product-button add-to-cart" style="width: 100%; padding: 15px; font-size: 1.1rem; margin-top: 10px;">
+            Hoàn tất đặt hàng
+          </button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; 2026 Coffee Store. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const form = document.getElementById("checkout-form");
+    form.addEventListener("submit", (e) => {
+      const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+      if (selectedMethod === "cash") {
+        // Simple confirmation for cash
+        if (!confirm("Xác nhận đặt hàng với phương thức thanh toán tiền mặt?")) {
+          e.preventDefault();
+        }
+      }
+    });
+  </script>
+</body>
+</html>

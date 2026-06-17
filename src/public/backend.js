@@ -1,14 +1,16 @@
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const { prisma } = require("../config/db");
 
 module.exports = async (app) => {
   app.post("/create-checkout-session", async (req, res) => {
     const cart = req.session.cart || [];
-    const Product = require("../models/Product");
 
     try {
       const populatedCart = await Promise.all(
         cart.map(async (item) => {
-          const product = await Product.findById(item.productId);
+          const product = await prisma.product.findUnique({
+            where: { id: parseInt(item.productId) }
+          });
           const priceAfterDiscount = product.price * (1 - (product.discount || 0) / 100);
           return {
             name: product.name,

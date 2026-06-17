@@ -1,39 +1,81 @@
-const Cart = require("../../models/Cart");
+const { prisma } = require("../../config/db");
 
 const getCartByUserId = async (userId) => {
-  return await Cart.findOne({ userId }).populate("items.productId");
+  return await prisma.cart.findFirst({
+    where: { userId: parseInt(userId) },
+    include: {
+      items: {
+        include: {
+          product: true,
+        },
+      },
+    },
+  });
 };
 
 const addToCart = async (userId, productId, quantity = 1) => {
-  let cart = await Cart.findOne({ userId });
+  userId = parseInt(userId);
+  productId = parseInt(productId);
+  
+  let cart = await prisma.cart.findFirst({
+    where: { userId },
+  });
+
   if (!cart) {
-    cart = new Cart({ userId, items: [] });
+    cart = await prisma.cart.create({
+      data: { userId },
+    });
   }
 
-  const itemIndex = cart.items.findIndex(
-    (item) => item.productId.toString() === productId
-  );
+  const existingItem = await prisma.cartItem.findFirst({
+    where: {
+      cartId: cart.id,
+      productId: productId,
+    },
+  });
 
-  if (itemIndex >= 0) {
-    cart.items[itemIndex].quantity += quantity;
+  if (existingItem) {
+    return await prisma.cartItem.update({
+      where: { id: existingItem.id },
+      data: { quantity: existingItem.quantity + quantity },
+    });
   } else {
-    cart.items.push({ productId, quantity });
+    return await prisma.cartItem.create({
+      data: {
+        cartId: cart.id,
+        productId: productId,
+        quantity: quantity,
+      },
+    });
   }
-
-  return await cart.save();
 };
 
 const removeFromCart = async (userId, productId) => {
-  const cart = await Cart.findOne({ userId });
+  userId = parseInt(userId);
+  productId = parseInt(productId);
+
+  const cart = await prisma.cart.findFirst({
+    where: { userId },
+  });
+
   if (!cart) {
     return null;
   }
 
-  cart.items = cart.items.filter(
-    (item) => item.productId.toString() !== productId
-  );
+  const existingItem = await prisma.cartItem.findFirst({
+    where: {
+      cartId: cart.id,
+      productId: productId,
+    },
+  });
 
-  return await cart.save();
+  if (existingItem) {
+    return await prisma.cartItem.delete({
+      where: { id: existingItem.id },
+    });
+  }
+
+  return null;
 };
 
 module.exports = {

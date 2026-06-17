@@ -1,38 +1,6 @@
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const axios = require("axios");
 const crypto = require("crypto");
 const querystring = require("querystring");
-
-const processStripePayment = async (amount, token) => {
-  return await stripe.charges.create({
-    amount,
-    currency: "vnd",
-    source: token,
-    description: "Coffee Store Payment",
-  });
-};
-
-const processZaloPayPayment = async (amount, orderId) => {
-  const zaloPayConfig = {
-    app_id: process.env.ZALO_APP_ID,
-    key1: process.env.ZALO_KEY1,
-  };
-  const order = {
-    app_id: zaloPayConfig.app_id,
-    app_trans_id: `${Date.now()}`,
-    app_user: "User",
-    app_time: Date.now(),
-    item: "[]",
-    embed_data: "{}",
-    amount,
-    description: `Order #${orderId}`,
-    bank_code: "zalopayapp",
-    callback_url: "http://localhost:3000/payment/zalopay/callback",
-  };
-  const data = `${order.app_id}|${order.app_trans_id}|${order.app_user}|${order.amount}|${order.app_time}|${order.embed_data}|${order.item}`;
-  order.mac = crypto.createHmac("sha256", zaloPayConfig.key1).update(data).digest("hex");
-  return await axios.post("https://sandbox.zalopay.vn/v2/create", order);
-};
 
 const generateVNPayUrl = (amount, orderId) => {
   const vnpConfig = {
@@ -74,7 +42,5 @@ const generateVNPayUrl = (amount, orderId) => {
 };
 
 module.exports = {
-  processStripePayment,
-  processZaloPayPayment,
   generateVNPayUrl,
 };

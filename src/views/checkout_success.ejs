@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thanh toán thành công - Coffee Store</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>☕ Coffee Store</h1>
+      <nav>
+        <a href="/">Trang chủ</a>
+        <a href="/cart">Giỏ hàng</a>
+      </nav>
+    </div>
+  </header>
+  
+  <main class="container" style="text-align: center; padding: 100px 0;">
+    <div style="background: white; padding: 50px; border-radius: 12px; box-shadow: var(--shadow); max-width: 600px; margin: 0 auto;">
+      <div style="font-size: 5rem; color: #2ecc71; margin-bottom: 20px;">✓</div>
+      <h2 style="color: var(--primary-color); margin-bottom: 20px;"><%= typeof message !== 'undefined' ? message : 'Đặt hàng thành công!' %></h2>
+      <p style="color: var(--light-text); margin-bottom: 30px;">Cảm ơn bạn đã tin tưởng Coffee Store. Đơn hàng của bạn đang được xử lý và sẽ sớm được giao đến.</p>
+      <a href="/" class="product-button add-to-cart" style="text-decoration: none; padding: 12px 30px;">Tiếp tục mua sắm</a>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; 2026 Coffee Store. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

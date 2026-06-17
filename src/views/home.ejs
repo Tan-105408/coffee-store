@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Coffee Store - Thưởng thức hương vị tuyệt vời</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header>
+      <div class="container">
+        <h1>☕ Coffee Store</h1>
+        <nav>
+          <a href="/">Trang chủ</a>
+          <a href="/cart">Giỏ hàng</a>
+          <% if (user) { %>
+            <div class="user-info">
+              <span>👋 <%= user.username %></span>
+              <a href="/auth/profile">Hồ sơ</a>
+              <a href="/auth/logout">Đăng xuất</a>
+            </div>
+          <% } else { %>
+            <a href="/auth/login">Đăng nhập</a>
+            <a href="/auth/register">Đăng ký</a>
+          <% } %>
+        </nav>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="container">
+        <h2>Hương vị nồng nàn, Khởi đầu ngày mới</h2>
+        <p>Khám phá bộ sưu tập cà phê và trà đặc biệt của chúng tôi</p>
+      </div>
+    </section>
+
+    <main class="container">
+      <section class="search-filter-container">
+        <form action="/" method="GET">
+          <input
+            type="text"
+            name="search"
+            placeholder="Bạn muốn uống gì?..."
+            value="<%= typeof search !== 'undefined' ? search : '' %>" />
+          <select name="category">
+            <option value="">Tất cả danh mục</option>
+            <% ['Cà phê', 'Trà trái cây', 'Trà sữa', 'Sinh tố', 'Nước ép', 'Bánh ngọt'].forEach(cat => { %>
+              <option value="<%= cat %>" <%= category === cat ? 'selected' : '' %>>
+                <%= cat %>
+              </option>
+            <% }) %>
+          </select>
+          <input
+            type="number"
+            name="minPrice"
+            placeholder="Giá từ"
+            value="<%= typeof minPrice !== 'undefined' ? minPrice : '' %>" />
+          <input
+            type="number"
+            name="maxPrice"
+            placeholder="Giá đến"
+            value="<%= typeof maxPrice !== 'undefined' ? maxPrice : '' %>" />
+          <button type="submit">Tìm kiếm</button>
+        </form>
+      </section>
+
+      <h2 class="section-title">Thực đơn của chúng tôi</h2>
+      <section class="product-grid">
+        <% if (products && products.length > 0) { %>
+          <% products.forEach(product => { %>
+            <div class="product">
+              <div class="product-img-container">
+                <img src="<%= product.image %>" alt="<%= product.name %>" />
+              </div>
+              <div class="product-info">
+                <h3 class="product-name"><%= product.name %></h3>
+                <div class="price-container">
+                  <% if (product.discount > 0) { %>
+                    <span class="original-price"><%= product.price.toLocaleString() %>đ</span>
+                    <span class="price"><%= (product.price * (1 - product.discount / 100)).toLocaleString() %>đ</span>
+                  <% } else { %>
+                    <span class="price"><%= product.price.toLocaleString() %>đ</span>
+                  <% } %>
+                </div>
+                <div class="product-buttons">
+                  <a href="/api/products/<%= product.id %>" class="product-button view-details" style="text-decoration: none;">
+                    Chi tiết
+                  </a>
+                  <button class="product-button add-to-cart" data-id="<%= product.id %>">
+                    Mua ngay
+                  </button>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <div style="grid-column: 1/-1; text-align: center; padding: 50px;">
+            <p>Rất tiếc, chúng tôi không tìm thấy sản phẩm phù hợp.</p>
+            <a href="/" style="color: var(--accent-color);">Xem tất cả sản phẩm</a>
+          </div>
+        <% } %>
+      </section>
+    </main>
+
+    <footer>
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-section">
+            <h4>Về chúng tôi</h4>
+            <p>Coffee Store mang đến trải nghiệm thưởng thức cà phê nguyên chất và các loại trà hảo hạng.</p>
+          </div>
+          <div class="footer-section">
+            <h4>Liên kết</h4>
+            <a href="/">Trang chủ</a>
+            <a href="/cart">Giỏ hàng</a>
+            <a href="/auth/login">Tài khoản</a>
+          </div>
+          <div class="footer-section">
+            <h4>Liên hệ</h4>
+            <p>📍 123 Đường Cà Phê, TP. Hồ Chí Minh</p>
+            <p>📞 0123 456 789</p>
+            <p>📧 contact@coffeestore.com</p>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2026 Coffee Store. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="/script.js"></script>
+  </body>
+</html>

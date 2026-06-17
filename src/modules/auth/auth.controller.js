@@ -28,7 +28,7 @@ const logout = asyncHandler(async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
   await authService.logout(refreshToken);
   clearTokenCookies(res);
-  res.redirect("/");
+  res.redirect("/"); // Redirect back to home after logout
 });
 
 const getLogin = (req, res) => {
@@ -39,6 +39,15 @@ const getRegister = (req, res) => {
   res.render("register");
 };
 
+const getProfile = asyncHandler(async (req, res) => {
+  res.render("profile", { user: req.user });
+});
+
+const updateProfile = asyncHandler(async (req, res) => {
+  const user = await authService.updateProfile(req.user.id, req.body);
+  res.json({ message: "Cập nhật hồ sơ thành công", user });
+});
+
 module.exports = {
   register,
   login,
@@ -46,4 +55,6 @@ module.exports = {
   logout,
   getLogin,
   getRegister,
+  getProfile,
+  updateProfile,
 };

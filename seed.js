@@ -1,52 +1,81 @@
-const mongoose = require('mongoose');
-const Product = require('./models/Product');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
-// Kết nối tới MongoDB
-mongoose.connect('mongodb://localhost:27017/coffee-store', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
-.then(() => console.log('✅ Connected to MongoDB'))
-.catch((err) => console.error('❌ MongoDB connection error:', err));
+async function main() {
+    console.log('🚀 Đang xóa dữ liệu cũ...');
+    // Xóa theo thứ tự để tránh lỗi ràng buộc khóa ngoại
+    await prisma.cartItem.deleteMany({});
+    await prisma.cart.deleteMany({});
+    await prisma.orderItem.deleteMany({});
+    await prisma.order.deleteMany({});
+    await prisma.review.deleteMany({});
+    await prisma.refreshToken.deleteMany({});
+    await prisma.product.deleteMany({});
+    await prisma.user.deleteMany({});
 
-// Dữ liệu mẫu với tên ảnh có tiền tố "cf"
-const seedProducts = [
-    { name: 'Cà phê sữa đá', price: 25000, image: '/images/cfsuada.jfif' },
-    { name: 'Cà phê đen đá', price: 20000, image: '/images/cfdenda.jfif' },
-    { name: 'Cà phê Espresso', price: 30000, image: '/images/cfespresso.jfif' },
-    { name: 'Cà phê Cappuccino', price: 35000, image: '/images/cfcapuchino.jfif' },
-    { name: 'Cà phê Latte', price: 40000, image: '/images/cflatte.jfif' },
-    { name: 'Cà phê Mocha', price: 45000, image: '/images/cfmocha.jfif' },
-    { name: 'Cà phê Macchiato', price: 47000, image: '/images/cfmacchiato.jfif' },
-    { name: 'Cà phê Americano', price: 30000, image: '/images/cfamericano.jfif' },
-    { name: 'Trà đào cam sả', price: 35000, image: '/images/cftdcs.jfif' },
-    { name: 'Trà sữa trân châu', price: 30000, image: '/images/cftstc.jfif' },
-    { name: 'Sinh tố xoài', price: 35000, image: '/images/cfstxoai.jfif' },
-    { name: 'Sinh tố bơ', price: 37000, image: '/images/cfstbo.jfif' },
-    { name: 'Sinh tố dâu', price: 34000, image: '/images/cfstdau.jfif' },
-    { name: 'Nước ép cam', price: 30000, image: '/images/cfnecam.jfif' },
-    { name: 'Nước ép cà rốt', price: 28000, image: '/images/cfnecarot.jfif' },
-    { name: 'Nước ép ổi', price: 29000, image: '/images/cfneoi.jfif' },
-    { name: 'Sữa chua đánh đá', price: 32000, image: '/images/cfscdd.jfif' },
-    { name: 'Nước suối', price: 10000, image: '/images/cfnsuoi.jfif' },
-    { name: 'Trà xanh matcha', price: 45000, image: '/images/cftxmatcha.jfif' },
-    { name: 'Chocolate nóng', price: 40000, image: '/images/cfchoco.jfif' },
-];
+    console.log('✅ Đang tạo 50 sản phẩm mẫu (Trà, Cà phê, Trà sữa)...');
 
-// Xóa toàn bộ dữ liệu cũ và thêm dữ liệu mới
-const seedDatabase = async () => {
-    try {
-        await Product.deleteMany({});
-        console.log('✅ Removed all existing products');
+    const coffeeNames = ['Espresso', 'Americano', 'Cappuccino', 'Latte', 'Mocha', 'Macchiato', 'Cà phê sữa đá', 'Cà phê đen đá', 'Cà phê trứng', 'Cà phê muối'];
+    const teaNames = ['Trà đào cam sả', 'Trà thạch vải', 'Trà dâu tây', 'Trà sen vàng', 'Trà hoa cúc', 'Trà thiết quan âm', 'Trà oolong', 'Trà nhài'];
+    const milkTeaNames = ['Trà sữa truyền thống', 'Trà sữa trân châu đen', 'Trà sữa khoai môn', 'Trà sữa matcha', 'Trà sữa socola', 'Trà sữa Hokkaido', 'Trà sữa Okinawa'];
 
-        await Product.insertMany(seedProducts);
-        console.log('✅ Seeded 20 products successfully');
+    const images = [
+        '/images/cfsuada.jfif', '/images/cfdenda.jfif', '/images/cfespresso.jfif',
+        '/images/cfcapuchino.jfif', '/images/cflatte.jfif', '/images/cfmocha.jfif',
+        '/images/cfmacchiato.jfif', '/images/cfamericano.jfif', '/images/cftdcs.jfif',
+        '/images/cftstc.jfif'
+    ];
 
-        mongoose.connection.close();
-    } catch (err) {
-        console.error('❌ Error seeding data:', err);
-        mongoose.connection.close();
+    const products = [];
+    
+    // Tạo khoảng 50 sản phẩm
+    for (let i = 1; i <= 50; i++) {
+        let name, category;
+        const rand = Math.random();
+        
+        if (rand < 0.4) {
+            name = coffeeNames[Math.floor(Math.random() * coffeeNames.length)];
+            category = 'Cà phê';
+        } else if (rand < 0.7) {
+            name = teaNames[Math.floor(Math.random() * teaNames.length)];
+            category = 'Trà trái cây';
+        } else {
+            name = milkTeaNames[Math.floor(Math.random() * milkTeaNames.length)];
+            category = 'Trà sữa';
+        }
+
+        products.push({
+            name: name + ' ' + (Math.random() > 0.5 ? 'Đậm Vị' : 'Thơm Ngon'), // Add suffix for variety instead of #i
+            price: (Math.floor(Math.random() * (60 - 20 + 1)) + 20) * 1000,
+            image: images[Math.floor(Math.random() * images.length)],
+            category: category,
+            discount: Math.random() > 0.8 ? 15 : 0,
+        });
     }
-};
 
-seedDatabase();
+    await prisma.product.createMany({
+        data: products
+    });
+
+    console.log('✅ Đang tạo User mẫu...');
+    await prisma.user.create({
+        data: {
+            username: 'tan',
+            email: 'admin@coffeestore.com',
+            password: '123456', // Trong thực tế hãy dùng bcrypt
+            role: 'admin',
+            address: '123 Đường ABC, Quận 1, TP.HCM'
+        }
+    });
+
+    console.log(`🎉 Hoàn tất! Đã thêm ${products.length} sản phẩm và 1 tài khoản Admin.`);
+}
+
+main()
+    .catch((e) => {
+        console.error(e);
+        process.exit(1);
+    })
+    .finally(async () => {
+        await prisma.$disconnect();
+    });

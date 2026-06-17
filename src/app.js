@@ -5,13 +5,13 @@ const cookieParser = require("cookie-parser");
 const errorHandler = require("./middlewares/error.middleware");
 const optionalAuth = require("./middlewares/optionalAuth.middleware");
 const loggingMiddleware = require("./middlewares/logging.middleware");
-const Product = require("./models/Product");
+const { prisma } = require("./config/db");
 
 const app = express();
 
 // Set up view engine
 app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "../views"));
+app.set("views", path.join(__dirname, "views"));
 
 // Middlewares
 app.use(cors());
@@ -19,7 +19,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(loggingMiddleware);
-app.use(express.static(path.join(__dirname, "../public")));
+app.use(express.static(path.join(__dirname, "public")));
 
 // Routes
 app.use("/auth", require("./modules/auth/auth.routes"));
@@ -31,22 +31,29 @@ app.use("/order", require("./modules/orders/orders.routes"));
 app.use("/review", require("./modules/reviews/reviews.routes"));
 
 // Backend admin routes (from original app.js)
-require("../public/backend")(app);
+require("./public/backend")(app);
 
 // Root route (Home)
 app.get("/", optionalAuth, async (req, res) => {
   const { search, category, minPrice, maxPrice } = req.query;
-  let query = {};
-  if (search) query.name = { $regex: search, $options: "i" };
-  if (category) query.category = category;
+  
+  let where = {};
+  if (search) {
+    where.name = { contains: search };
+  }
+  if (category) {
+    where.category = category;
+  }
   if (minPrice || maxPrice) {
-    query.price = {};
-    if (minPrice) query.price.$gte = Number(minPrice);
-    if (maxPrice) query.price.$lte = Number(maxPrice);
+    where.price = {};
+    if (minPrice) where.price.gte = Number(minPrice);
+    if (maxPrice) where.price.lte = Number(maxPrice);
   }
 
   try {
-    const products = await Product.find(query);
+    const products = await prisma.product.findMany({
+      where: where
+    });
     res.render("home", {
       products,
       search,

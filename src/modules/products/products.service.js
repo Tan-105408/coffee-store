@@ -1,36 +1,45 @@
-const Product = require("../../models/Product");
+const { prisma } = require("../../config/db");
 
 const getAllProducts = async (filters) => {
   const { search, category, minPrice, maxPrice } = filters;
-  let query = {};
+  let where = {};
   if (search) {
-    query.name = { $regex: search, $options: "i" };
+    where.name = { contains: search };
   }
   if (category) {
-    query.category = category;
+    where.category = category;
   }
   if (minPrice || maxPrice) {
-    query.price = {};
-    if (minPrice) query.price.$gte = Number(minPrice);
-    if (maxPrice) query.price.$lte = Number(maxPrice);
+    where.price = {};
+    if (minPrice) where.price.gte = Number(minPrice);
+    if (maxPrice) where.price.lte = Number(maxPrice);
   }
-  return await Product.find(query);
+  return await prisma.product.findMany({ where });
 };
 
 const getProductById = async (id) => {
-  return await Product.findById(id);
+  return await prisma.product.findUnique({
+    where: { id: parseInt(id) },
+  });
 };
 
 const createProduct = async (productData) => {
-  return await Product.create(productData);
+  return await prisma.product.create({
+    data: productData,
+  });
 };
 
 const updateProduct = async (id, productData) => {
-  return await Product.findByIdAndUpdate(id, productData, { new: true });
+  return await prisma.product.update({
+    where: { id: parseInt(id) },
+    data: productData,
+  });
 };
 
 const deleteProduct = async (id) => {
-  return await Product.findByIdAndDelete(id);
+  return await prisma.product.delete({
+    where: { id: parseInt(id) },
+  });
 };
 
 module.exports = {

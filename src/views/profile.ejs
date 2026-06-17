@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hồ sơ người dùng - Coffee Store</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .profile-card {
+      max-width: 600px;
+      margin: 50px auto;
+      background: var(--white);
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+    }
+    .profile-card h2 {
+      margin-bottom: 30px;
+      color: var(--primary-color);
+      text-align: center;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>☕ Coffee Store</h1>
+      <nav>
+        <a href="/">Trang chủ</a>
+        <a href="/cart">Giỏ hàng</a>
+        <div class="user-info">
+          <span>👋 <%= user.username %></span>
+          <a href="/auth/logout">Đăng xuất</a>
+        </div>
+      </nav>
+    </div>
+  </header>
+  
+  <main class="container">
+    <div class="profile-card">
+      <h2>Thông tin cá nhân</h2>
+      <form id="profile-form">
+        <div class="form-group">
+          <label for="username">Tên đăng nhập:</label>
+          <input type="text" name="username" value="<%= user.username %>" required>
+        </div>
+        <div class="form-group">
+          <label for="email">Email:</label>
+          <input type="email" name="email" value="<%= user.email %>" required>
+        </div>
+        <div class="form-group">
+          <label for="address">Địa chỉ giao hàng:</label>
+          <input type="text" name="address" value="<%= user.address || '' %>" placeholder="Nhập địa chỉ của bạn">
+        </div>
+        <button type="submit" class="product-button add-to-cart" style="width: 100%; margin-top: 10px;">Cập nhật thông tin</button>
+      </form>
+      <div style="text-align: center; margin-top: 20px;">
+        <a href="/" style="color: var(--accent-color); text-decoration: none;">← Quay về trang chủ</a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; 2026 Coffee Store. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+  
+  <script>
+    document.getElementById("profile-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      try {
+        const response = await fetch("/auth/profile/update", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        alert(result.message);
+        if (response.ok) {
+           window.location.reload();
+        }
+      } catch (error) {
+        alert("Có lỗi xảy ra khi cập nhật hồ sơ!");
+      }
+    });
+  </script>
+</body>
+</html>
