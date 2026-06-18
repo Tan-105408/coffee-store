@@ -1,4 +1,4 @@
-# ☕ Coffee Store - SQL Server Version
+# Coffee Store - SQL Server Version
 
 Chào mừng bạn đến với dự án **Coffee Store**, một ứng dụng web thương mại điện tử chuyên về cà phê và trà, được xây dựng bằng **Node.js (Express)** và **SQL Server** thông qua **Prisma ORM**.
 
@@ -16,7 +16,7 @@ Dự án này đã được chuyển đổi từ MongoDB sang mô hình cơ sở
 
 ---
 
-## 📋 Yêu cầu hệ thống
+## Yêu cầu hệ thống
 Trước khi cài đặt, hãy đảm bảo máy bạn đã có:
 1. **Node.js** (Phiên bản 16 trở lên)
 2. **Microsoft SQL Server** (Local hoặc Azure)
@@ -24,7 +24,7 @@ Trước khi cài đặt, hãy đảm bảo máy bạn đã có:
 
 ---
 
-## 🚀 Hướng dẫn cài đặt và Chạy dự án
+## Hướng dẫn cài đặt và Chạy dự án
 
 ### 1. Tải dự án và Cài đặt thư viện
 Mở terminal tại thư mục dự án và chạy:
@@ -70,7 +70,7 @@ Truy cập ứng dụng tại: `http://localhost:3030`
 
 ---
 
-## 📖 Các chức năng chính
+## Các chức năng chính
 - [x] **Xác thực:** Đăng ký, Đăng nhập, Đăng xuất, Quản lý Hồ sơ.
 - [x] **Cửa hàng:** Xem danh sách món, Tìm kiếm theo tên, Lọc theo danh mục và Giá.
 - [x] **Chi tiết sản phẩm:** Xem mô tả, hình ảnh và tính toán tổng tiền theo số lượng.
@@ -79,7 +79,7 @@ Truy cập ứng dụng tại: `http://localhost:3030`
 
 ---
 
-## 📁 Cấu trúc thư mục (Rút gọn)
+## Cấu trúc thư mục (Rút gọn)
 ```text
 src/
 ├── config/        # Cấu hình DB (Prisma) và Env
