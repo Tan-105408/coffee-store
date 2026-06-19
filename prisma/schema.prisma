@@ -30,6 +30,7 @@ model Product {
   name       String
   price      Float
   image      String
+  description String?     @db.NVarChar(Max)
   category   String      @default("coffee")
   discount   Int         @default(0)
   createdAt  DateTime    @default(now())

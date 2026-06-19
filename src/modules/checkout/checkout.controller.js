@@ -8,7 +8,7 @@ const getCheckout = asyncHandler(async (req, res) => {
 });
 
 const processCheckout = asyncHandler(async (req, res) => {
-  const { paymentMethod, email, stripeToken } = req.body;
+  const { paymentMethod, email } = req.body;
   const { cartItems, total } = await checkoutService.getCheckoutData(req.user.id);
 
   if (cartItems.length === 0) {

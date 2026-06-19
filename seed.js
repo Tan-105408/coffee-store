@@ -1,9 +1,9 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const bcrypt = require('bcryptjs');
 
 async function main() {
     console.log('🚀 Đang xóa dữ liệu cũ...');
-    // Xóa theo thứ tự để tránh lỗi ràng buộc khóa ngoại
     await prisma.cartItem.deleteMany({});
     await prisma.cart.deleteMany({});
     await prisma.orderItem.deleteMany({});
@@ -13,41 +13,36 @@ async function main() {
     await prisma.product.deleteMany({});
     await prisma.user.deleteMany({});
 
-    console.log('✅ Đang tạo 50 sản phẩm mẫu (Trà, Cà phê, Trà sữa)...');
+    console.log('✅ Đang tạo 50 sản phẩm mẫu đa dạng...');
 
-    const coffeeNames = ['Espresso', 'Americano', 'Cappuccino', 'Latte', 'Mocha', 'Macchiato', 'Cà phê sữa đá', 'Cà phê đen đá', 'Cà phê trứng', 'Cà phê muối'];
-    const teaNames = ['Trà đào cam sả', 'Trà thạch vải', 'Trà dâu tây', 'Trà sen vàng', 'Trà hoa cúc', 'Trà thiết quan âm', 'Trà oolong', 'Trà nhài'];
-    const milkTeaNames = ['Trà sữa truyền thống', 'Trà sữa trân châu đen', 'Trà sữa khoai môn', 'Trà sữa matcha', 'Trà sữa socola', 'Trà sữa Hokkaido', 'Trà sữa Okinawa'];
-
-    const images = [
-        '/images/cfsuada.jfif', '/images/cfdenda.jfif', '/images/cfespresso.jfif',
-        '/images/cfcapuchino.jfif', '/images/cflatte.jfif', '/images/cfmocha.jfif',
-        '/images/cfmacchiato.jfif', '/images/cfamericano.jfif', '/images/cftdcs.jfif',
-        '/images/cftstc.jfif'
+    const categories = ['Cà phê', 'Trà', 'Trà sữa', 'Bánh ngọt', 'Sinh tố', 'Nước ép'];
+    const items = {
+        'Cà phê': ['Espresso', 'Americano', 'Cappuccino', 'Latte', 'Mocha', 'Cà phê sữa đá'],
+        'Trà': ['Trà đào', 'Trà vải', 'Trà sen vàng', 'Trà oolong'],
+        'Trà sữa': ['Trà sữa truyền thống', 'Trà sữa trân châu', 'Trà sữa matcha'],
+        'Bánh ngọt': ['Bánh Tiramisu', 'Bánh Mousse', 'Bánh Croissant'],
+        'Sinh tố': ['Sinh tố dâu', 'Sinh tố bơ', 'Sinh tố xoài'],
+        'Nước ép': ['Nước ép cam', 'Nước ép táo', 'Nước ép ổi']
+    };
+    const imageFiles = [
+        'cfamericano.jfif', 'cfcapuchino.jfif', 'cfchoco.jfif', 'cfdenda.jfif', 'cfespresso.jfif',
+        'cflatte.jfif', 'cfmacchiato.jfif', 'cfmocha.jfif', 'cfnecam.jfif', 'cfnecarot.jfif',
+        'cfneoi.jfif', 'cfnsuoi.jfif', 'cfscdd.jfif', 'cfstbo.jfif', 'cfstdau.jfif',
+        'cfstxoai.jfif', 'cfsuada.jfif', 'cftdcs.jfif', 'cftstc.jfif', 'cftxmatcha.jfif'
     ];
 
     const products = [];
     
-    // Tạo khoảng 50 sản phẩm
     for (let i = 1; i <= 50; i++) {
-        let name, category;
-        const rand = Math.random();
-        
-        if (rand < 0.4) {
-            name = coffeeNames[Math.floor(Math.random() * coffeeNames.length)];
-            category = 'Cà phê';
-        } else if (rand < 0.7) {
-            name = teaNames[Math.floor(Math.random() * teaNames.length)];
-            category = 'Trà trái cây';
-        } else {
-            name = milkTeaNames[Math.floor(Math.random() * milkTeaNames.length)];
-            category = 'Trà sữa';
-        }
+        const category = categories[Math.floor(Math.random() * categories.length)];
+        const nameList = items[category];
+        const name = nameList[Math.floor(Math.random() * nameList.length)];
+        const randomImage = imageFiles[Math.floor(Math.random() * imageFiles.length)];
 
         products.push({
-            name: name + ' ' + (Math.random() > 0.5 ? 'Đậm Vị' : 'Thơm Ngon'), // Add suffix for variety instead of #i
-            price: (Math.floor(Math.random() * (60 - 20 + 1)) + 20) * 1000,
-            image: images[Math.floor(Math.random() * images.length)],
+            name: `${name} ${i}`,
+            price: (Math.floor(Math.random() * (70 - 25 + 1)) + 25) * 1000,
+            image: `/images/${randomImage}`,
             category: category,
             discount: Math.random() > 0.8 ? 15 : 0,
         });
@@ -57,14 +52,15 @@ async function main() {
         data: products
     });
 
-    console.log('✅ Đang tạo User mẫu...');
+    console.log('✅ Đang tạo User Admin mẫu...');
+    const hashedPassword = await bcrypt.hash('123456', 10);
     await prisma.user.create({
         data: {
-            username: 'tan',
+            username: 'admin',
             email: 'admin@coffeestore.com',
-            password: '123456', // Trong thực tế hãy dùng bcrypt
+            password: hashedPassword,
             role: 'admin',
-            address: '123 Đường ABC, Quận 1, TP.HCM'
+            address: 'Admin Address'
         }
     });
 

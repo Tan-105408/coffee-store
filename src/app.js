@@ -30,8 +30,7 @@ app.use("/payment", require("./modules/payments/payments.routes"));
 app.use("/order", require("./modules/orders/orders.routes"));
 app.use("/review", require("./modules/reviews/reviews.routes"));
 
-// Backend admin routes (from original app.js)
-require("./public/backend")(app);
+app.use("/admin", require("./modules/admin/admin.routes"));
 
 // Root route (Home)
 app.get("/", optionalAuth, async (req, res) => {

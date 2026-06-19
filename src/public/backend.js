@@ -1,43 +1,18 @@
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { prisma } = require("../config/db");
 
 module.exports = async (app) => {
-  app.post("/create-checkout-session", async (req, res) => {
-    const cart = req.session.cart || [];
-
-    try {
-      const populatedCart = await Promise.all(
-        cart.map(async (item) => {
-          const product = await prisma.product.findUnique({
-            where: { id: parseInt(item.productId) }
-          });
-          const priceAfterDiscount = product.price * (1 - (product.discount || 0) / 100);
-          return {
-            name: product.name,
-            price: priceAfterDiscount,
-            quantity: item.quantity,
-          };
-        })
-      );
-
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        line_items: populatedCart.map((item) => ({
-          price_data: {
-            currency: "vnd",
-            product_data: { name: item.name },
-            unit_amount: Math.round(item.price),
-          },
-          quantity: item.quantity,
-        })),
-        mode: "payment",
-        success_url: `${process.env.BASE_URL}/success`,
-        cancel_url: `${process.env.BASE_URL}/cancel`,
-      });
-
-      res.json({ sessionId: session.id });
-    } catch (error) {
-      res.status(500).json({ message: "Lỗi tạo phiên thanh toán", error: error.message });
+  // Placeholder for future payment logic (e.g., VNPay)
+  app.post("/create-payment", async (req, res) => {
+    const { method } = req.body; // 'cod' or 'vnpay'
+    
+    if (method === 'cod') {
+        // Handle COD logic here (e.g., update order status)
+        res.json({ message: "Đặt hàng thành công bằng tiền mặt (COD)" });
+    } else if (method === 'vnpay') {
+        // Handle VNPay logic here
+        res.json({ message: "Chức năng thanh toán VNPay đang được phát triển" });
+    } else {
+        res.status(400).json({ message: "Phương thức thanh toán không hợp lệ" });
     }
   });
 };

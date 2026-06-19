@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard | Coffee Store</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body { background-color: #f4f7f6; }
+    .dashboard-container { max-width: 1100px; margin: 40px auto; padding: 20px; }
+    .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 30px; }
+    h2 { color: #6f4e37; margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+    th { background-color: #f9f9f9; }
+    .btn { padding: 8px 15px; border-radius: 6px; border: none; cursor: pointer; color: white; font-size: 0.9rem; }
+    .btn-delete { background-color: #e74c3c; }
+    .btn-update { background-color: #3498db; }
+    .btn-add { background-color: #27ae60; padding: 10px 20px; }
+    .form-group { display: flex; gap: 10px; margin-bottom: 20px; }
+    .form-group input { padding: 10px; border: 1px solid #ddd; border-radius: 6px; flex: 1; }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h1>Admin Dashboard</h1>
+      <a href="/" class="product-button">Về Trang Chủ</a>
+    </div>
+    
+    <div class="card">
+      <h2>Quản lý Sản phẩm</h2>
+      <form action="/admin/products/add" method="POST" class="form-group">
+        <input type="text" name="name" placeholder="Tên sản phẩm" required>
+        <input type="number" name="price" placeholder="Giá" required>
+        <input type="text" name="image" placeholder="URL Ảnh" required>
+        <input type="text" name="category" placeholder="Danh mục" required>
+        <button type="submit" class="btn btn-add">Thêm</button>
+      </form>
+      <table>
+        <tr><th>Tên</th><th>Giá</th><th>Hành động</th></tr>
+        <% products.forEach(product => { %>
+          <tr>
+            <td><%= product.name %></td>
+            <td>
+              <form action="/admin/products/update/<%= product.id %>" method="POST" style="display: flex; flex-direction: column; gap: 5px;">
+                <input type="text" name="name" value="<%= product.name %>" placeholder="Tên" required>
+                <input type="number" name="price" value="<%= product.price %>" placeholder="Giá" required>
+                <input type="text" name="image" value="<%= product.image %>" placeholder="URL Ảnh">
+                <textarea name="description" placeholder="Mô tả"><%= product.description %></textarea>
+                <button type="submit" class="btn btn-update">Cập nhật</button>
+              </form>
+            </td>
+            <td>
+              <form action="/admin/products/delete/<%= product.id %>" method="POST">
+                <button type="submit" class="btn btn-delete">Xóa</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Quản lý Người dùng</h2>
+      <table>
+        <tr><th>Tên đăng nhập</th><th>Email</th><th>Hành động</th></tr>
+        <% users.forEach(user => { %>
+          <tr>
+            <td><%= user.username %></td>
+            <td><%= user.email %></td>
+            <td>
+              <form action="/admin/users/delete/<%= user.id %>" method="POST">
+                <button type="submit" class="btn btn-delete">Xóa</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

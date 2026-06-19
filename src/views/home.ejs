@@ -13,6 +13,9 @@
         <nav>
           <a href="/">Trang chủ</a>
           <a href="/cart">Giỏ hàng</a>
+          <% if (user && user.role === 'admin') { %>
+            <a href="/admin" style="color: #f1c40f; font-weight: bold;">Dashboard Admin</a>
+          <% } %>
           <% if (user) { %>
             <div class="user-info">
               <span>👋 <%= user.username %></span>
