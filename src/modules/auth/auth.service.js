@@ -2,6 +2,8 @@ const bcrypt = require("bcryptjs");
 const { prisma } = require("../../config/db");
 const { generateToken } = require("../../utils/jwt");
 const ApiError = require("../../utils/ApiError");
+const firebaseAdminApp = require("../../config/firebase-admin");
+const { getAuth } = require("firebase-admin/auth");
 
 const register = async (userData) => {
   const { username, email, password } = userData;
@@ -74,6 +76,38 @@ const logout = async (refreshToken) => {
   await prisma.refreshToken.delete({ where: { token: refreshToken } }).catch(() => {});
 };
 
+const loginWithGoogle = async (idToken) => {
+  try {
+    const auth = getAuth(firebaseAdminApp);
+    const decodedToken = await auth.verifyIdToken(idToken);
+    const { email, name, picture, uid } = decodedToken;
+
+    let user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      // Tạo user mới nếu chưa tồn tại
+      user = await prisma.user.create({
+        data: {
+          username: email.split("@")[0], // Dùng phần đầu email làm username tạm thời
+          email,
+          googleId: uid,
+          role: "user",
+        },
+      });
+    } else if (!user.googleId) {
+      // Cập nhật googleId nếu user đã tồn tại nhưng chưa liên kết Google
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { googleId: uid },
+      });
+    }
+
+    return user;
+  } catch (error) {
+    throw new ApiError(401, "Xác thực Google thất bại: " + error.message);
+  }
+};
+
 const updateProfile = async (userId, updateData) => {
   return await prisma.user.update({
     where: { id: parseInt(userId) },
@@ -84,6 +118,7 @@ const updateProfile = async (userId, updateData) => {
 module.exports = {
   register,
   login,
+  loginWithGoogle,
   generateAuthTokens,
   refreshAuth,
   logout,

@@ -17,6 +17,17 @@ const login = asyncHandler(async (req, res) => {
   res.redirect("/");
 });
 
+const googleLogin = asyncHandler(async (req, res) => {
+  const { idToken } = req.body;
+  const user = await authService.loginWithGoogle(idToken);
+  const { accessToken, refreshToken } = await authService.generateAuthTokens(user);
+  setTokenCookies(res, accessToken, refreshToken);
+  res.status(200).json({ 
+    message: "Đăng nhập Google thành công",
+    redirectUrl: "/" 
+  });
+});
+
 const refresh = asyncHandler(async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
   const tokens = await authService.refreshAuth(refreshToken);
@@ -51,6 +62,7 @@ const updateProfile = asyncHandler(async (req, res) => {
 module.exports = {
   register,
   login,
+  googleLogin,
   refresh,
   logout,
   getLogin,

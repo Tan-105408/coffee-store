@@ -41,6 +41,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Product not found");
   }
   res.json({ message: "Product updated", product });
+  console.log("Updated Product:", product);
 });
 
 const deleteProduct = asyncHandler(async (req, res) => {
