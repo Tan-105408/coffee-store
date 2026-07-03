@@ -78,8 +78,37 @@ const removeFromCart = async (userId, productId) => {
   return null;
 };
 
+const updateQuantity = async (userId, productId, action) => {
+  userId = parseInt(userId);
+  productId = parseInt(productId);
+
+  const cart = await prisma.cart.findFirst({
+    where: { userId },
+  });
+
+  if (!cart) return null;
+
+  const item = await prisma.cartItem.findFirst({
+    where: { cartId: cart.id, productId },
+  });
+
+  if (!item) return null;
+
+  let newQty = action === 'increase' ? item.quantity + 1 : item.quantity - 1;
+  if (newQty < 1) {
+    await prisma.cartItem.delete({ where: { id: item.id } });
+    return { deleted: true };
+  }
+
+  return await prisma.cartItem.update({
+    where: { id: item.id },
+    data: { quantity: newQty },
+  });
+};
+
 module.exports = {
   getCartByUserId,
   addToCart,
   removeFromCart,
+  updateQuantity,
 };

@@ -42,8 +42,18 @@ const removeItemFromCart = asyncHandler(async (req, res) => {
   res.json({ success: true, message: "Removed from cart", cart });
 });
 
+const updateItemQuantity = asyncHandler(async (req, res) => {
+  const { productId, action } = req.body;
+  if (!productId || !action) {
+    throw new ApiError(400, "Product ID and action are required");
+  }
+  const result = await cartService.updateQuantity(req.user.id, productId, action);
+  res.json({ success: true, message: "Quantity updated", result });
+});
+
 module.exports = {
   getCart,
   addItemToCart,
   removeItemFromCart,
+  updateItemQuantity,
 };

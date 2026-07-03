@@ -1,4 +1,4 @@
-// Utility: Lấy token từ localStorage và tạo funciton apiFetch cho các request
+// Utility: Lấy token từ localStorage và tạo function apiFetch cho các request
 const token = localStorage.getItem("token");
 
 const apiFetch = async (url, options = {}) => {
@@ -16,6 +16,49 @@ const apiFetch = async (url, options = {}) => {
   const headers = { ...defaultHeaders, ...options.headers };
 
   return fetch(url, { ...options, headers });
+};
+
+// Helper: Hiển thị thông báo SweetAlert2 chuyên nghiệp
+const showToast = (message, icon = 'success') => {
+  if (typeof Swal !== 'undefined') {
+    Swal.fire({
+      text: message,
+      icon: icon,
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+      iconColor: icon === 'success' ? '#2a9d8f' : '#e76f51',
+      background: '#fff',
+      color: '#2b221e',
+      customClass: {
+        popup: 'shadow-lg rounded-3 border-0'
+      }
+    });
+  } else {
+    alert(message);
+  }
+};
+
+const showModalAlert = (title, text, icon = 'success') => {
+  if (typeof Swal !== 'undefined') {
+    return Swal.fire({
+      title: title,
+      text: text,
+      icon: icon,
+      confirmButtonColor: '#5c3e35',
+      background: '#fdfbf7',
+      color: '#2b221e',
+      customClass: {
+        popup: 'rounded-4 border-0 shadow-lg',
+        confirmButton: 'co-btn co-btn-primary px-4'
+      }
+    });
+  } else {
+    alert(text);
+    return Promise.resolve();
+  }
 };
 
 // ================= LẤY THÔNG TIN NGƯỜI DÙNG =================
@@ -44,8 +87,8 @@ if (token) {
 // ================= THÊM VÀO GIỎ HÀNG =================
 // Dùng event delegation để tránh gán nhiều listener hoặc trùng lặp
 document.addEventListener("click", async (e) => {
-  if (e.target.classList.contains("add-to-cart")) {
-    const button = e.target;
+  const button = e.target.closest(".add-to-cart");
+  if (button) {
     const productId = button.getAttribute("data-id");
     
     // Kiểm tra nếu ở trang chi tiết có input quantity
@@ -64,16 +107,18 @@ document.addEventListener("click", async (e) => {
       });
       const data = await response.json();
       if (data.success) {
-        alert("Đã thêm sản phẩm vào giỏ!");
-        // Nếu đang ở trang chi tiết thì chuyển hướng về giỏ hàng luôn cho tiện
+        showToast("Đã thêm sản phẩm vào giỏ hàng thành công!");
+        // Nếu đang ở trang chi tiết thì chuyển hướng về giỏ hàng sau 1 giây cho mượt mà
         if (window.location.pathname.includes("/api/products/")) {
-           window.location.href = "/cart";
+          setTimeout(() => {
+            window.location.href = "/cart";
+          }, 1200);
         }
       } else {
-        alert(data.message || "Lỗi khi thêm sản phẩm vào giỏ.");
+        showToast(data.message || "Lỗi khi thêm sản phẩm vào giỏ.", "error");
       }
     } catch (error) {
-      alert("Có lỗi xảy ra khi thêm sản phẩm.");
+      showToast("Có lỗi xảy ra khi thêm sản phẩm.", "error");
       console.error(error);
     }
   }
@@ -87,23 +132,47 @@ document.querySelectorAll(".remove-item").forEach((button) => {
       console.error("ProductId không xác định khi xóa");
       return;
     }
+
+    if (typeof Swal !== 'undefined') {
+      const confirmation = await Swal.fire({
+        title: 'Xác nhận xóa?',
+        text: "Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e76f51',
+        cancelButtonColor: '#7d706a',
+        confirmButtonText: 'Đồng ý xóa',
+        cancelButtonText: 'Hủy bỏ',
+        background: '#fdfbf7',
+        color: '#2b221e',
+        customClass: {
+          popup: 'rounded-4 border-0 shadow-lg',
+          confirmButton: 'co-btn px-4',
+          cancelButton: 'co-btn px-4'
+        }
+      });
+
+      if (!confirmation.isConfirmed) return;
+    } else {
+      if (!confirm("Bạn có muốn xóa sản phẩm khỏi giỏ?")) return;
+    }
+
     try {
       const response = await apiFetch(`/cart/remove/${productId}`, {
         method: "DELETE",
       });
       const data = await response.json();
       if (response.ok) {
-        alert("Đã xóa sản phẩm khỏi giỏ!");
-        window.location.reload();
+        showToast("Đã xóa sản phẩm khỏi giỏ hàng!");
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
-        alert(data.message || "Lỗi khi xóa sản phẩm khỏi giỏ.");
+        showToast(data.message || "Lỗi khi xóa sản phẩm khỏi giỏ.", "error");
       }
     } catch (error) {
-      alert("Có lỗi xảy ra khi xóa sản phẩm.");
+      showToast("Có lỗi xảy ra khi xóa sản phẩm.", "error");
       console.error(error);
     }
   });
 });
-
-// ================= XEM CHI TIẾT SẢN PHẨM =================
-// Đã chuyển sang trang chi tiết riêng, không dùng modal nữa

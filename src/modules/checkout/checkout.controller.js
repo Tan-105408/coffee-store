@@ -8,23 +8,19 @@ const getCheckout = asyncHandler(async (req, res) => {
 });
 
 const processCheckout = asyncHandler(async (req, res) => {
-  const { paymentMethod, email } = req.body;
+  const { paymentMethod } = req.body;
   const { cartItems, total } = await checkoutService.getCheckoutData(req.user.id);
 
   if (cartItems.length === 0) {
     return res.status(400).send("Cart is empty");
   }
 
-  const orderDetails = cartItems
-    .map((item) => `${item.name} x${item.quantity}`)
-    .join(", ");
   const amount = Math.round(total);
-
-  // Note: Using absolute URL might be problematic if port changes, but following existing logic
   const baseUrl = `http://localhost:${process.env.PORT || 3030}`;
 
   if (paymentMethod === "cash") {
-    // Handle cash payment - usually just confirm the order
+    // Save the order to the database
+    await checkoutService.createOrder(req.user.id, amount, "cash", cartItems);
     await checkoutService.clearCart(req.user.id);
     res.render("checkout_success", { message: "Đặt hàng thành công! Vui lòng thanh toán khi nhận hàng." });
   } else if (paymentMethod === "vnpay") {
@@ -32,6 +28,8 @@ const processCheckout = asyncHandler(async (req, res) => {
       amount,
       orderId: `VNP_${Date.now()}`,
     });
+    // Note: Order should technically be created here as well, 
+    // but pending payment status until callback
     await checkoutService.clearCart(req.user.id);
     res.redirect(response.data.paymentUrl);
   } else {

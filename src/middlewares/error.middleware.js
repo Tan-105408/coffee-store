@@ -10,17 +10,23 @@ const errorHandler = (err, req, res, next) => {
 
   res.locals.errorMessage = err.message;
 
-  const response = {
-    code: statusCode,
-    message,
-    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
-  };
+  if (req.accepts('html')) {
+    // Render error page if requested via browser
+    res.status(statusCode).render('error', { statusCode, message });
+  } else {
+    // Send JSON for API requests
+    const response = {
+      code: statusCode,
+      message,
+      ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+    };
 
-  if (process.env.NODE_ENV === "development") {
-    console.error(err);
+    if (process.env.NODE_ENV === "development") {
+      console.error(err);
+    }
+
+    res.status(statusCode).json(response);
   }
-
-  res.status(statusCode).send(response);
 };
 
 module.exports = errorHandler;

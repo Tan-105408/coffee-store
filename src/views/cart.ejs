@@ -4,151 +4,163 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Giỏ hàng của bạn - Coffee Store</title>
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="/style.css" />
-    <style>
-      .cart-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 30px 0;
-        background: var(--white);
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: var(--shadow);
-      }
-      .cart-table th, .cart-table td {
-        padding: 15px;
-        text-align: left;
-        border-bottom: 1px solid #eee;
-      }
-      .cart-table th {
-        background-color: var(--primary-color);
-        color: var(--white);
-      }
-      .cart-item-img {
-        width: 80px;
-        height: 80px;
-        object-fit: cover;
-        border-radius: 8px;
-      }
-      .cart-summary {
-        background-color: var(--white);
-        padding: 25px;
-        border-radius: 12px;
-        box-shadow: var(--shadow);
-        max-width: 400px;
-        margin-left: auto;
-      }
-      .summary-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 15px;
-        font-size: 1.1rem;
-      }
-      .summary-total {
-        border-top: 2px solid #eee;
-        padding-top: 15px;
-        font-weight: bold;
-        color: var(--accent-color);
-        font-size: 1.4rem;
-      }
-    </style>
   </head>
-  <body>
+  <body class="d-flex flex-column min-vh-100 bg-light">
+    <!-- Navbar -->
     <header>
-      <div class="container">
-        <h1>☕ Coffee Store</h1>
-        <nav>
-          <a href="/">Trang chủ</a>
-          <a href="/cart">Giỏ hàng</a>
-          <% if (user) { %>
-            <div class="user-info">
-              <span>👋 <%= user.username %></span>
-              <a href="/auth/profile">Hồ sơ</a>
-              <a href="/auth/logout">Đăng xuất</a>
-            </div>
-          <% } else { %>
-            <a href="/auth/login">Đăng nhập</a>
-            <a href="/auth/register">Đăng ký</a>
-          <% } %>
-        </nav>
-      </div>
+      <nav class="navbar navbar-expand-lg co-navbar navbar-dark sticky-top">
+        <div class="container">
+          <a class="navbar-brand d-flex align-items-center" href="/">
+            <span class="fs-3 me-2">☕</span>
+            <span class="font-serif fw-bold">Coffee Store</span>
+          </a>
+          <div class="navbar-nav ms-auto">
+            <a class="nav-link" href="/"><i class="bi bi-house-door me-1"></i> Trang chủ</a>
+          </div>
+        </div>
+      </nav>
     </header>
 
-    <main class="container">
-      <h2 class="section-title" style="margin-top: 40px;">Giỏ hàng của bạn</h2>
+    <main class="container flex-grow-1 py-5">
+      <div class="d-flex align-items-center mb-4 gap-3">
+        <h2 class="font-serif fw-bold m-0"><i class="bi bi-cart3 me-2"></i> Giỏ hàng của bạn</h2>
+        <% if (cart && Array.isArray(cart) && cart.length > 0) { %>
+          <span class="badge bg-secondary rounded-pill px-3 py-2"><%= cart.length %> sản phẩm</span>
+        <% } %>
+      </div>
 
-      <% if (cart && cart.length > 0) { %>
-        <table class="cart-table">
-          <thead>
-            <tr>
-              <th>Sản phẩm</th>
-              <th>Đơn giá</th>
-              <th>Số lượng</th>
-              <th>Thành tiền</th>
-              <th>Hành động</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% cart.forEach(item => { %>
-              <tr>
-                <td>
-                  <div style="display: flex; align-items: center; gap: 15px;">
-                    <img src="<%= item.product.image %>" alt="<%= item.product.name %>" class="cart-item-img" />
-                    <span><%= item.product.name %></span>
-                  </div>
-                </td>
-                <td>
-                   <% if (item.product.discount > 0) { %>
-                    <div style="display: flex; flex-direction: column;">
-                      <span style="text-decoration: line-through; color: #999; font-size: 0.8rem;"><%= item.product.price.toLocaleString() %>đ</span>
-                      <span><%= item.priceAfterDiscount.toLocaleString() %>đ</span>
-                    </div>
-                  <% } else { %>
-                    <%= item.product.price.toLocaleString() %>đ
-                  <% } %>
-                </td>
-                <td><%= item.quantity %></td>
-                <td><%= item.total.toLocaleString() %>đ</td>
-                <td>
-                  <button class="remove-item product-button view-details" data-id="<%= item.product.id %>" style="width: auto; padding: 5px 15px;">
-                    Xóa
-                  </button>
-                </td>
-              </tr>
-            <% }); %>
-          </tbody>
-        </table>
+      <% if (cart && Array.isArray(cart) && cart.length > 0) {%>
+        <div class="row g-4">
+          <!-- Table Section -->
+          <div class="col-lg-8">
+            <div class="co-cart-table table-responsive shadow-sm">
+              <table class="table align-middle m-0">
+                <thead>
+                  <tr>
+                    <th class="ps-4">Sản phẩm</th>
+                    <th>Đơn giá</th>
+                    <th>Số lượng</th>
+                    <th>Thành tiền</th>
+                    <th class="text-center">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% cart && Array.isArray(cart) && cart.forEach(item => { %>
+                    <tr>
+                      <td class="ps-4">
+                        <div class="d-flex align-items-center gap-3">
+                          <img src="<%= item.product.image %>" alt="<%= item.product.name %>" class="rounded-3" style="width: 70px; height: 70px; object-fit: cover;" />
+                          <span class="fw-semibold text-dark"><%= item.product.name %></span>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="fw-bold text-dark">
+                          <%= item.priceAfterDiscount ? item.priceAfterDiscount.toLocaleString() : item.product.price.toLocaleString() %>đ
+                        </div>
+                        <% if (item.product.discount > 0) { %>
+                          <small class="text-decoration-line-through text-muted small"><%= item.product.price.toLocaleString() %>đ</small>
+                        <% } %>
+                      </td>
+                      <td>
+                        <div class="d-flex align-items-center gap-2">
+                          <button class="btn btn-sm btn-outline-secondary qty-btn" data-action="decrease" data-id="<%= item.product.id %>">
+                            <i class="bi bi-dash"></i>
+                          </button>
+                          <span class="badge bg-light text-dark border px-3 py-2 fw-bold"><%= item.quantity %></span>
+                          <button class="btn btn-sm btn-outline-secondary qty-btn" data-action="increase" data-id="<%= item.product.id %>">
+                            <i class="bi bi-plus"></i>
+                          </button>
+                        </div>
+                      </td>
+                      <td class="fw-bold text-primary"><%= item.total.toLocaleString() %>đ</td>
+                      <td class="text-center">
+                        <button class="btn btn-outline-danger btn-sm remove-item border-0" data-id="<%= item.product.id %>" title="Xóa">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-        <div class="cart-summary">
-          <div class="summary-row">
-            <span>Tạm tính:</span>
-            <span><%= total.toLocaleString() %>đ</span>
+          <!-- Summary Section -->
+          <div class="col-lg-4">
+            <div class="co-summary-card shadow-lg sticky-top" style="top: 100px;">
+              <h4 class="font-serif fw-bold mb-4">Tổng quan đơn hàng</h4>
+              <div class="d-flex justify-content-between mb-3">
+                <span class="text-muted">Tạm tính:</span>
+                <span class="fw-bold text-dark"><%= total.toLocaleString() %>đ</span>
+              </div>
+              <div class="d-flex justify-content-between mb-4 border-top pt-3">
+                <span class="fw-bold fs-5">Tổng cộng:</span>
+                <span class="fw-bold fs-4 text-success" style="color: var(--co-success) !important;"><%= total.toLocaleString() %>đ</span>
+              </div>
+              <a href="/checkout" class="co-btn co-btn-primary w-100 py-3 text-uppercase fw-bold shadow-sm">
+                <i class="bi bi-credit-card me-2"></i> Thanh toán ngay
+              </a>
+              <a href="/" class="co-btn co-btn-secondary w-100 mt-3 py-2 text-decoration-none">
+                <i class="bi bi-arrow-left me-2"></i> Tiếp tục mua sắm
+              </a>
+            </div>
           </div>
-          <div class="summary-row summary-total">
-            <span>Tổng cộng:</span>
-            <span><%= total.toLocaleString() %>đ</span>
-          </div>
-          <a href="/checkout" class="product-button add-to-cart" style="display: block; width: 100%; margin-top: 20px; text-decoration: none;">
-            Tiến hành thanh toán
-          </a>
         </div>
       <% } else { %>
-        <div style="text-align: center; padding: 100px 0;">
-          <img src="https://cdn-icons-png.flaticon.com/512/11329/11329060.png" alt="Empty Cart" style="width: 150px; opacity: 0.5; margin-bottom: 20px;" />
-          <p style="font-size: 1.2rem; color: var(--light-text); margin-bottom: 20px;">Giỏ hàng của bạn đang trống!</p>
-          <a href="/" class="product-button add-to-cart" style="text-decoration: none; padding: 10px 30px;">Mua sắm ngay</a>
+        <!-- Empty Cart -->
+        <div class="text-center bg-white p-5 rounded-4 shadow-sm border border-light">
+          <i class="bi bi-cart-x text-muted" style="font-size: 4rem;"></i>
+          <h4 class="mt-4 font-serif fw-bold">Giỏ hàng của bạn đang trống!</h4>
+          <p class="text-muted mb-4">Hãy khám phá thêm các món ngon tuyệt hảo của chúng tôi.</p>
+          <a href="/" class="co-btn co-btn-primary px-4 py-2">
+            <i class="bi bi-shop me-2"></i> Mua sắm ngay
+          </a>
         </div>
       <% } %>
     </main>
 
-    <footer>
-      <div class="container">
-        <div class="footer-bottom">
-          <p>&copy; 2026 Coffee Store. All rights reserved.</p>
-        </div>
+    <!-- Footer -->
+    <footer class="co-footer mt-5">
+      <div class="container text-center">
+        <p class="m-0 text-white-50 small">&copy; 2026 Coffee Store. Tất cả quyền được bảo lưu.</p>
       </div>
     </footer>
 
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/script.js"></script>
+    <script>
+      // Quantity control handlers
+      document.querySelectorAll('.qty-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+          const productId = this.dataset.id;
+          const action = this.dataset.action;
+
+          try {
+            const response = await fetch('/cart/update', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ productId, action })
+            });
+
+            if (response.ok) {
+              location.reload();
+            } else {
+              const data = await response.json();
+              Swal.fire({ icon: 'error', text: data.message || 'Lỗi cập nhật giỏ hàng' });
+            }
+          } catch (error) {
+            console.error('Error:', error);
+          }
+        });
+      });
+    </script>
   </body>
 </html>

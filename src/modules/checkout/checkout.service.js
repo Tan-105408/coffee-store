@@ -1,5 +1,23 @@
 const { prisma } = require("../../config/db");
 
+const createOrder = async (userId, totalAmount, paymentMethod, cartItems) => {
+  const order = await prisma.order.create({
+    data: {
+      userId: parseInt(userId),
+      totalAmount: parseFloat(totalAmount),
+      paymentMethod,
+      orderItems: {
+        create: cartItems.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          priceAtPurchase: item.price,
+        })),
+      },
+    },
+  });
+  return order;
+};
+
 const getCheckoutData = async (userId) => {
   const cart = await prisma.cart.findFirst({
     where: { userId: parseInt(userId) },
@@ -22,6 +40,7 @@ const getCheckoutData = async (userId) => {
     const discount = Number(product.discount) || 0;
     const priceAfterDiscount = price * (1 - discount / 100);
     return {
+      productId: product.id,
       name: product.name,
       price: priceAfterDiscount,
       quantity: item.quantity,
@@ -46,4 +65,5 @@ const clearCart = async (userId) => {
 module.exports = {
   getCheckoutData,
   clearCart,
+  createOrder,
 };

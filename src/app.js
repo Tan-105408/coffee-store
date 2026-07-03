@@ -69,7 +69,4 @@ app.get("/", optionalAuth, async (req, res) => {
 // Error handling
 app.use(errorHandler);
 
-// CORS binding
-app.use(cors({ origin: 'http://localhost:3030' }));
-
 module.exports = app;
