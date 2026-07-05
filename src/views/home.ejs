@@ -238,5 +238,21 @@
     <!-- Bootstrap 5 JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/script.js"></script>
+
+    <% if (payment === "success") { %>
+    <script>
+      Swal.fire({
+        icon: 'success',
+        title: 'Thanh toán thành công!',
+        text: 'Cảm ơn bạn đã mua hàng. Đơn hàng đang được xử lý.',
+        timer: 4000,
+        timerProgressBar: true,
+        showConfirmButton: true,
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#198754'
+      });
+    </script>
+    <% } %>
+
   </body>
 </html>

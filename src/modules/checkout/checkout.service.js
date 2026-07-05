@@ -42,12 +42,12 @@ const getCheckoutData = async (userId) => {
     return {
       productId: product.id,
       name: product.name,
-      price: priceAfterDiscount,
+      price: parseFloat((priceAfterDiscount || 0).toFixed(2)),
       quantity: item.quantity,
-      total: priceAfterDiscount * item.quantity,
+      total: parseFloat((priceAfterDiscount * item.quantity || 0).toFixed(2)),
     };
   });
-  const total = cartItems.reduce((sum, item) => sum + item.total, 0);
+  const total = parseFloat(cartItems.reduce((sum, item) => sum + item.total, 0).toFixed(2));
   return { cartItems, total };
 };
 

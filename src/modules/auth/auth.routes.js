@@ -3,6 +3,9 @@ const authController = require("./auth.controller");
 const auth = require("../../middlewares/auth.middleware");
 const router = express.Router();
 
+// GET /auth → redirect home (handle logged-out users visiting /auth)
+router.get("/", (req, res) => res.redirect("/"));
+
 router.get("/login", authController.getLogin);
 router.get("/register", authController.getRegister);
 router.get("/profile", auth, authController.getProfile);

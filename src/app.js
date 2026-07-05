@@ -26,7 +26,7 @@ app.use("/auth", require("./modules/auth/auth.routes"));
 app.use("/api/products", require("./modules/products/products.routes"));
 app.use("/cart", require("./modules/carts/carts.routes"));
 app.use("/checkout", require("./modules/checkout/checkout.routes"));
-app.use("/payment", require("./modules/payments/payments.routes"));
+app.use("/payment", require("./modules/payments/payos.routes"));
 app.use("/order", require("./modules/orders/orders.routes"));
 app.use("/review", require("./modules/reviews/reviews.routes"));
 
@@ -60,6 +60,7 @@ app.get("/", optionalAuth, async (req, res) => {
       minPrice,
       maxPrice,
       user: res.locals.user || null,
+      payment: req.query.payment || null,
     });
   } catch (error) {
     res.status(500).send("Error loading products: " + error.message);

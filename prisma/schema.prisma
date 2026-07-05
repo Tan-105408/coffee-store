@@ -78,13 +78,33 @@ model Review {
   createdAt DateTime @default(now())
 }
 
+model PaymentTransaction {
+  id               Int         @id @default(autoincrement())
+  orderId          Int
+  order            Order       @relation(fields: [orderId], references: [id])
+  provider         String      // "cash", "vnpay", "payos"
+  status           String      // "pending", "processing", "completed", "failed", "cancelled"
+  transactionId    String?    // Payment gateway transaction ID (VNP_TxnRef, PayOS orderCode)
+  amount           Float
+  currency         String      @default("VND")
+  errorCode        String?     // Payment gateway error code
+  errorMessage     String?    // Payment gateway error message
+  paidAt           DateTime?    // When payment was completed
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
 model Order {
   id                Int         @id @default(autoincrement())
   userId            Int
   user              User        @relation(fields: [userId], references: [id])
   totalAmount       Float
-  status            String      @default("pending")
-  paymentMethod     String      @default("cash")
+  status            String      @default("pending")  // "pending", "processing", "completed", "cancelled"
+  paymentMethod     String      @default("cash")     // "cash", "vnpay", "payos"
+  paymentStatus     String      @default("pending")  // "pending", "processing", "completed", "failed"
+  paymentTransactionId String?  // Reference to PaymentTransaction.id
+  paymentTimestamp  DateTime?    // When payment was completed
+  paymentTransactions PaymentTransaction[]
   deliveryAddress   String?     @db.NVarChar(Max)
   deliveryTime      DateTime?
   orderItems        OrderItem[]
