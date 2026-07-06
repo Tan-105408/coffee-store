@@ -22,6 +22,7 @@
           <span class="font-serif fw-bold">Coffee Store</span>
         </a>
         <div class="navbar-nav ms-auto">
+          <span class="nav-link text-warning"><i class="bi bi-person-circle me-1"></i> <%= user ? user.username || user.email : 'Khách' %></span>
           <a class="nav-link" href="/"><i class="bi bi-house-door me-1"></i> Trang chủ</a>
         </div>
       </div>

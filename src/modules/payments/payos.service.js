@@ -321,7 +321,7 @@ class PayOSService {
         await prisma.order.update({
           where: { id: parseInt(orderId) },
           data: {
-            status: "CANCELLED",
+            status: "cancelled",
             paymentStatus: "REFUNDED"
           }
         });

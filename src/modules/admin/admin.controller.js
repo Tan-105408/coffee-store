@@ -5,7 +5,7 @@ const getDashboard = asyncHandler(async (req, res) => {
   const users = await prisma.user.findMany();
   const products = await prisma.product.findMany();
   const orders = await prisma.order.findMany({ include: { user: true, orderItems: { include: { product: true } } } });
-  res.render("admin-dashboard", { users, products, orders });
+  res.render("admin-dashboard", { users, products, orders, user: req.user });
 });
 
 const deleteUser = asyncHandler(async (req, res) => {

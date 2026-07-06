@@ -10,11 +10,15 @@ const errorHandler = (err, req, res, next) => {
 
   res.locals.errorMessage = err.message;
 
+  // Redirect browser on auth/role errors instead of showing error page
+  if ((statusCode === 401 || statusCode === 403) && req.accepts('html')) {
+    const redirectUrl = statusCode === 401 ? '/auth/login' : '/';
+    return res.redirect(redirectUrl);
+  }
+
   if (req.accepts('html')) {
-    // Render error page if requested via browser
     res.status(statusCode).render('error', { statusCode, message });
   } else {
-    // Send JSON for API requests
     const response = {
       code: statusCode,
       message,

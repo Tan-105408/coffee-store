@@ -9,6 +9,9 @@ const { prisma } = require("./config/db");
 
 const app = express();
 
+// Disable ETag to prevent admin stale-cache issues
+app.set("etag", false);
+
 // Set up view engine
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
