@@ -1,12 +1,9 @@
-const { PrismaClient } = require("@prisma/client");
+const { prisma } = require("../../config/db");
 const axios = require("axios");
 const crypto = require("crypto");
 const ApiError = require("../../utils/ApiError");
 
-const prisma = new PrismaClient();
-
-// Load PayOS configuration from environment
-const { PAYOS_CLIENT_ID, PAYOS_API_KEY, PAYOS_CHECKSUM_KEY, PAYOS_RETURN_URL, PAYOS_CANCEL_URL, PAYOS_WEBHOOK_SECRET } = process.env;
+const { PAYOS_CLIENT_ID, PAYOS_API_KEY, PAYOS_CHECKSUM_KEY, PAYOS_RETURN_URL, PAYOS_CANCEL_URL } = process.env;
 
 if (!PAYOS_CLIENT_ID || !PAYOS_API_KEY || !PAYOS_CHECKSUM_KEY) {
   throw new Error("PayOS environment variables are not properly configured");
@@ -14,15 +11,12 @@ if (!PAYOS_CLIENT_ID || !PAYOS_API_KEY || !PAYOS_CHECKSUM_KEY) {
 
 class PayOSService {
   constructor() {
-    this.client = {
-      clientId: PAYOS_CLIENT_ID,
-      apiKey: PAYOS_API_KEY,
-      checksumKey: PAYOS_CHECKSUM_KEY,
-    };
+    this.clientId = PAYOS_CLIENT_ID;
+    this.apiKey = PAYOS_API_KEY;
+    this.checksumKey = PAYOS_CHECKSUM_KEY;
     this.baseUrl = `http://localhost:${process.env.PORT || 3030}`;
     this.returnUrl = PAYOS_RETURN_URL || `${this.baseUrl}/payment/payos/return`;
     this.cancelUrl = PAYOS_CANCEL_URL || `${this.baseUrl}/payment/payos/cancel`;
-    this.webhookSecret = PAYOS_WEBHOOK_SECRET;
   }
 
   // Generate PayOS payment URL for an order
@@ -32,7 +26,6 @@ class PayOSService {
         throw new ApiError(400, "Order ID is required for PayOS payment generation");
       }
 
-      // Validate order exists and has pending status
       const order = await prisma.order.findUnique({
         where: { id: parseInt(orderId) }
       });
@@ -45,14 +38,13 @@ class PayOSService {
         throw new ApiError(400, `Order status is not pending. Current status: ${order.status}`);
       }
 
-      // Prepare items for PayOS
       const payosItems = items.map(item => ({
         name: item.name || `Product ${item.productId || ''}`,
         quantity: item.quantity || 1,
-        price: item.price || 0 // Vietnamese Dong (no conversion)
+        price: item.price || 0
       }));
 
-      const orderCode = Date.now(); // Unique order code for PayOS
+      const orderCode = Date.now();
 
       const payload = {
         orderCode,
@@ -61,38 +53,36 @@ class PayOSService {
         items: payosItems,
         returnUrl: this.returnUrl,
         cancelUrl: this.cancelUrl,
-        expiredAt: Math.floor(Date.now() / 1000) + (30 * 60) // 30 minutes expiry
+        expiredAt: Math.floor(Date.now() / 1000) + (30 * 60)
       };
 
-      // Generate HMAC-SHA256 signature for PayOS
       payload.signature = this.generateSignature(payload);
 
-      // Make API call to PayOS
       const response = await axios.post("https://api-merchant.payos.vn/v2/payment-requests", payload, {
         headers: {
           'Content-Type': 'application/json',
-          'x-client-id': PAYOS_CLIENT_ID,
-          'x-api-key': PAYOS_API_KEY
+          'x-client-id': this.clientId,
+          'x-api-key': this.apiKey
         }
       });
 
       const paymentData = response.data;
 
-      // Validate PayOS API response status
       if (paymentData.code !== "00") {
-        console.error("PayOS API returned error:", paymentData.desc, "full response:", paymentData);
+        console.error("PayOS API error:", paymentData.desc, paymentData);
         throw new ApiError(400, `PayOS API error: ${paymentData.desc || "Unknown error"}`);
       }
 
       if (!paymentData.data?.checkoutUrl) {
-        console.error("PayOS API response missing checkoutUrl:", paymentData);
+        console.error("PayOS response missing checkoutUrl:", paymentData);
         throw new ApiError(500, "PayOS did not return a checkout URL");
       }
 
-      // Create payment transaction record
+      // Create payment transaction WITH orderCode saved
       await prisma.paymentTransaction.create({
         data: {
           orderId: parseInt(orderId),
+          orderCode: BigInt(orderCode),
           provider: "PAYOS",
           status: "PENDING",
           transactionId: paymentData.data?.id?.toString(),
@@ -103,7 +93,6 @@ class PayOSService {
         }
       });
 
-      // Update order status to indicate payment processing
       await prisma.order.update({
         where: { id: parseInt(orderId) },
         data: {
@@ -115,7 +104,7 @@ class PayOSService {
 
       return {
         paymentUrl: paymentData.data?.checkoutUrl,
-        orderCode: paymentData.data?.orderCode,
+        orderCode: orderCode,
         transactionId: paymentData.data?.id?.toString(),
         status: "PENDING",
         expiresAt: paymentData.data?.expiredAt
@@ -123,96 +112,102 @@ class PayOSService {
 
     } catch (error) {
       console.error("PayOS payment generation error:", error);
-
       if (error.response?.status >= 400) {
         throw new ApiError(error.response.status, `PayOS API error: ${error.response.data?.message || error.message}`);
       }
-
       throw new ApiError(500, `Failed to generate PayOS payment: ${error.message}`);
     }
   }
 
   // Verify webhook signature from PayOS
-  verifyWebhookSignature(webhookData, signature) {
-    const { data, signature: providedSignature } = webhookData;
+  verifyWebhookSignature(webhookData) {
+    try {
+      const { data, signature } = webhookData;
+      if (!data || !signature) return false;
 
-    const computedSignature = this.generateWebhookChecksum({ ...data, ...{ refund: false } });
+      const sortedKeys = Object.keys(data).sort();
+      const sortedData = {};
+      sortedKeys.forEach(key => {
+        sortedData[key] = data[key];
+      });
 
-    return crypto.createHash('sha256').update(this.client.checksumKey + providedSignature).digest('hex') ===
-           crypto.createHash('sha256').update(computedSignature).digest('hex');
+      const raw = JSON.stringify(sortedData);
+      const computed = crypto
+        .createHmac("sha256", this.checksumKey)
+        .update(raw)
+        .digest("hex");
+
+      return computed === signature;
+    } catch {
+      return false;
+    }
   }
 
-  // Process PayOS webhook
+  // Process PayOS webhook — lookup by orderCode
   async processWebhook(webhookData) {
     try {
       const { data } = webhookData;
 
       const {
         orderCode,
-        amount,
         status,
         transactionId,
-        description,
-        cancelledAt,
-        paidAt,
-        refund,
         code: errorCode,
-        desc: errorMessage
+        desc: errorMessage,
+        paidAt,
       } = data;
 
-      console.log("Processing PayOS webhook:", { orderCode, status, errorCode, errorMessage });
+      console.log("Processing PayOS webhook:", { orderCode, status, errorCode });
 
-      // Find order by PayOS orderCode
-      const order = await prisma.order.findFirst({
-        where: {
-          paymentMethod: "PAYOS",
-          AND: [
-            { paymentTransaction: { transactionId: transactionId?.toString() } },
-            { paymentTransaction: { status: "PENDING" } }
-          ]
-        }
+      // Find payment transaction by orderCode
+      const paymentTx = await prisma.paymentTransaction.findFirst({
+        where: { orderCode: Number(orderCode) },
+        include: { order: true }
       });
 
-      if (!order) {
-        console.warn(`Order not found for PayOS webhook: ${orderCode} (transaction: ${transactionId})`);
-        return { status: "ERROR", message: "Order not found" };
+      if (!paymentTx) {
+        console.warn(`PaymentTransaction not found for orderCode: ${orderCode}`);
+        return { status: "ERROR", message: "PaymentTransaction not found" };
       }
 
-      // Update payment transaction
+      const order = paymentTx.order;
+
+      // Skip if already processed
+      if (paymentTx.status === "COMPLETED" && status.toLowerCase() !== "refund") {
+        console.log(`Order ${order.id} already completed, skipping webhook`);
+        return { status: "SUCCESS", message: "Already processed" };
+      }
+
       const paymentUpdateData = {
-        status: status.toUpperCase(),
         errorCode: errorCode || null,
         errorMessage: errorMessage || null,
         paidAt: paidAt ? new Date(paidAt * 1000) : null,
         updatedAt: new Date()
       };
 
-      // Update order based on payment status
-      const orderUpdateData = {};
+      const orderUpdateData = { updatedAt: new Date() };
 
       switch (status.toLowerCase()) {
         case 'paid':
         case 'success':
         case 'completed':
           paymentUpdateData.status = 'COMPLETED';
+          if (transactionId) paymentUpdateData.transactionId = transactionId.toString();
           orderUpdateData.status = 'completed';
           orderUpdateData.paymentStatus = 'COMPLETED';
           orderUpdateData.paymentTimestamp = paidAt ? new Date(paidAt * 1000) : new Date();
-          orderUpdateData.updatedAt = new Date();
           break;
 
         case 'cancelled':
           paymentUpdateData.status = 'CANCELLED';
           orderUpdateData.status = 'cancelled';
           orderUpdateData.paymentStatus = 'CANCELLED';
-          orderUpdateData.updatedAt = new Date();
           break;
 
         case 'failed':
           paymentUpdateData.status = 'FAILED';
           orderUpdateData.status = 'cancelled';
           orderUpdateData.paymentStatus = 'FAILED';
-          orderUpdateData.updatedAt = new Date();
           break;
 
         default:
@@ -221,11 +216,8 @@ class PayOSService {
       }
 
       await prisma.$transaction([
-        prisma.paymentTransaction.updateMany({
-          where: {
-            orderId: order.id,
-            provider: "PAYOS"
-          },
+        prisma.paymentTransaction.update({
+          where: { id: paymentTx.id },
           data: paymentUpdateData
         }),
         prisma.order.update({
@@ -234,8 +226,7 @@ class PayOSService {
         })
       ]);
 
-      console.log(`PayOS webhook processed successfully: Order ${order.id}, Status: ${status}`);
-
+      console.log(`PayOS webhook OK: Order ${order.id}, Status: ${status}`);
       return { status: "SUCCESS", message: "Webhook processed successfully" };
 
     } catch (error) {
@@ -244,8 +235,51 @@ class PayOSService {
     }
   }
 
+  // Cancel payment by PayOS orderCode (used when user cancels on PayOS page)
+  async cancelByOrderCode(orderCode) {
+    const paymentTx = await prisma.paymentTransaction.findFirst({
+      where: { orderCode: BigInt(orderCode) }
+    });
+
+    if (!paymentTx) {
+      console.warn(`PaymentTransaction not found for orderCode: ${orderCode}`);
+      return false;
+    }
+
+    if (paymentTx.status === "COMPLETED") return false;
+
+    await prisma.$transaction([
+      prisma.paymentTransaction.update({
+        where: { id: paymentTx.id },
+        data: { status: "CANCELLED", updatedAt: new Date() }
+      }),
+      prisma.order.update({
+        where: { id: paymentTx.orderId },
+        data: { status: "cancelled", paymentStatus: "CANCELLED", updatedAt: new Date() }
+      })
+    ]);
+
+    console.log(`PayOS cancel OK: Order ${paymentTx.orderId}`);
+    return true;
+  }
+
+  // Find order by PayOS orderCode (for return URL)
+  async getOrderByOrderCode(orderCode) {
+    const paymentTx = await prisma.paymentTransaction.findFirst({
+      where: { orderCode: Number(orderCode) },
+      include: {
+        order: {
+          include: {
+            orderItems: { include: { product: true } },
+            user: { select: { id: true, username: true, email: true } }
+          }
+        }
+      }
+    });
+    return paymentTx;
+  }
+
   // Generate HMAC-SHA256 signature for PayOS payment-requests endpoint
-  // Sorted query-string: amount=X&cancelUrl=Y&description=Z&orderCode=W&returnUrl=V
   generateSignature(payload) {
     const fields = ["amount", "cancelUrl", "description", "orderCode", "returnUrl"];
     const sorted = fields
@@ -254,84 +288,60 @@ class PayOSService {
       .join("&");
 
     return crypto
-      .createHmac("sha256", this.client.checksumKey)
+      .createHmac("sha256", this.checksumKey)
       .update(sorted)
       .digest("hex");
   }
 
-  // Legacy SHA256 checksum for PayOS webhook verification only
-  generateWebhookChecksum(data) {
-    const sortedKeys = Object.keys(data).sort();
-    const sortedData = {};
-    sortedKeys.forEach(key => {
-      sortedData[key] = data[key];
-    });
-
-    const jsonString = JSON.stringify(sortedData);
-    return crypto
-      .createHash('sha256')
-      .update(this.client.checksumKey + jsonString)
-      .digest('hex');
-  }
-
   // Get payment details by order ID
   async getPaymentDetails(orderId) {
-    try {
-      const paymentTransaction = await prisma.paymentTransaction.findFirst({
-        where: { orderId: parseInt(orderId) },
-        orderBy: { createdAt: 'desc' }
-      });
+    const paymentTransaction = await prisma.paymentTransaction.findFirst({
+      where: { orderId: parseInt(orderId) },
+      orderBy: { createdAt: 'desc' }
+    });
 
-      if (!paymentTransaction) {
-        throw new ApiError(404, `Payment details not found for order: ${orderId}`);
-      }
-
-      return paymentTransaction;
-    } catch (error) {
-      console.error("Error getting PayOS payment details:", error);
-      throw error;
+    if (!paymentTransaction) {
+      throw new ApiError(404, `Payment details not found for order: ${orderId}`);
     }
+
+    return paymentTransaction;
   }
 
-  // Refund payment (if PayOS supports it)
+  // Refund payment (local record only — PayOS API not integrated)
   async refundPayment(orderId, amount, reason) {
-    try {
-      const paymentTransaction = await prisma.paymentTransaction.findFirst({
-        where: {
-          orderId: parseInt(orderId),
-          provider: "PAYOS"
-        }
-      });
-
-      if (!paymentTransaction) {
-        throw new ApiError(404, `Payment not found for order: ${orderId}`);
+    const paymentTransaction = await prisma.paymentTransaction.findFirst({
+      where: {
+        orderId: parseInt(orderId),
+        provider: "PAYOS"
       }
+    });
 
-      if (paymentTransaction.status === "COMPLETED") {
-        paymentTransaction.status = "REFUNDED";
-        paymentTransaction.errorCode = "REFUNDED";
-        paymentTransaction.errorMessage = reason || "Refund processed via webhook";
-        paymentTransaction.updatedAt = new Date();
+    if (!paymentTransaction) {
+      throw new ApiError(404, `Payment not found for order: ${orderId}`);
+    }
 
-        await prisma.paymentTransaction.update({
+    if (paymentTransaction.status === "COMPLETED") {
+      await prisma.$transaction([
+        prisma.paymentTransaction.update({
           where: { id: paymentTransaction.id },
-          data: paymentTransaction
-        });
-
-        await prisma.order.update({
+          data: {
+            status: "REFUNDED",
+            errorCode: "REFUNDED",
+            errorMessage: reason || "Refund processed",
+            updatedAt: new Date()
+          }
+        }),
+        prisma.order.update({
           where: { id: parseInt(orderId) },
           data: {
             status: "cancelled",
             paymentStatus: "REFUNDED"
           }
-        });
-      }
-
-      return paymentTransaction;
-    } catch (error) {
-      console.error("PayOS refund error:", error);
-      throw error;
+        })
+      ]);
     }
+
+    return paymentTransaction;
   }
 }
 

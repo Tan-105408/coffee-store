@@ -29,7 +29,7 @@ app.use("/auth", require("./modules/auth/auth.routes"));
 app.use("/api/products", require("./modules/products/products.routes"));
 app.use("/cart", require("./modules/carts/carts.routes"));
 app.use("/checkout", require("./modules/checkout/checkout.routes"));
-app.use("/payment", require("./modules/payments/payos.routes"));
+app.use("/payment/payos", require("./modules/payments/payos.routes"));
 app.use("/order", require("./modules/orders/orders.routes"));
 app.use("/review", require("./modules/reviews/reviews.routes"));
 

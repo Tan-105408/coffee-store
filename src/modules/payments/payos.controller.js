@@ -8,7 +8,6 @@ const handlePayOSWebhook = asyncHandler(async (req, res) => {
   try {
     const webhookData = req.body;
 
-    // Validate webhook data
     if (!webhookData || !webhookData.data || !webhookData.signature) {
       return res.status(400).json({
         status: "ERROR",
@@ -16,7 +15,6 @@ const handlePayOSWebhook = asyncHandler(async (req, res) => {
       });
     }
 
-    // Validate required PayOS webhook fields
     const { data } = webhookData;
     if (!data.orderCode || !data.status) {
       return res.status(400).json({
@@ -25,103 +23,85 @@ const handlePayOSWebhook = asyncHandler(async (req, res) => {
       });
     }
 
-    console.log("Received PayOS webhook:", {
+    console.log("PayOS webhook received:", {
       orderCode: data.orderCode,
       status: data.status,
       transactionId: data.id,
-      signature: webhookData.signature.substring(0, 20) + "..."
     });
 
-    // Process the webhook with PayOS service
+    // Verify webhook signature
+    const valid = payOSService.verifyWebhookSignature(webhookData);
+    if (!valid) {
+      console.error("PayOS webhook signature verification FAILED");
+      return res.status(400).json({
+        status: "ERROR",
+        message: "Invalid webhook signature"
+      });
+    }
+
     const result = await payOSService.processWebhook(webhookData);
 
     if (result.status === "SUCCESS") {
-      res.json({
-        status: "SUCCESS",
-        message: result.message
-      });
+      res.json({ status: "SUCCESS", message: result.message });
     } else {
       console.error("PayOS webhook processing failed:", result.message);
-      res.status(400).json({
-        status: "ERROR",
-        message: result.message
-      });
+      res.status(400).json({ status: "ERROR", message: result.message });
     }
 
   } catch (error) {
     console.error("PayOS webhook handler error:", error);
-
-    // Don't expose error details in production
     const errorMessage = process.env.NODE_ENV === "production"
       ? "Internal server error"
       : error.message;
 
-    res.status(500).json({
-      status: "ERROR",
-      message: errorMessage
-    });
+    res.status(500).json({ status: "ERROR", message: errorMessage });
   }
 });
 
 // Create PayOS payment for an order
 const createPayOSPayment = asyncHandler(async (req, res) => {
   try {
-    // Chỉ cần amount từ checkout controller
     const { amount } = req.body;
 
     if (!amount) {
       throw new ApiError(400, "Amount is required for PayOS payment");
     }
 
-    // Validate amount
     if (isNaN(amount) || amount <= 0) {
       throw new ApiError(400, "Invalid amount");
     }
 
-    // Get cart items for PayOS
     const { cartItems, total } = await CheckoutService.getCheckoutData(req.user.id);
 
     if (cartItems.length === 0) {
       throw new ApiError(400, "Cart is empty");
     }
 
-    // Save order to database with cart items
     const order = await CheckoutService.createOrder(req.user.id, total, "payos", cartItems);
-    const orderIdToUse = order.id;
-
-    // Generate PayOS payment URL
-    const paymentResult = await payOSService.generatePaymentUrl(amount, orderIdToUse, cartItems);
+    const paymentResult = await payOSService.generatePaymentUrl(amount, order.id, cartItems);
 
     if (!paymentResult.paymentUrl) {
       throw new ApiError(500, "Failed to generate PayOS payment URL");
     }
 
-    // Clear cart AFTER successful PayOS payment generation
     await CheckoutService.clearCart(req.user.id);
 
-    // Return payment URL and details
     res.json({
       paymentUrl: paymentResult.paymentUrl,
-      orderId: orderIdToUse,
+      orderId: order.id,
       paymentId: paymentResult.transactionId,
       status: "PENDING",
       expiresAt: paymentResult.expiresAt,
-      orderCode: paymentResult.orderCode || orderIdToUse
+      orderCode: paymentResult.orderCode
     });
 
   } catch (error) {
     console.error("PayOS payment creation error:", error);
 
     if (error instanceof ApiError) {
-      res.status(error.statusCode).json({
-        status: "ERROR",
-        message: error.message
-      });
+      res.status(error.statusCode).json({ status: "ERROR", message: error.message });
     } else {
-      res.status(500).json({
-        status: "ERROR",
-        message: "Failed to create PayOS payment"
-      });
+      res.status(500).json({ status: "ERROR", message: "Failed to create PayOS payment" });
     }
   }
 });
@@ -135,12 +115,7 @@ const getPaymentStatus = asyncHandler(async (req, res) => {
       throw new ApiError(400, "Order ID is required");
     }
 
-    // Get payment details
     const paymentDetails = await payOSService.getPaymentDetails(orderId);
-
-    if (!paymentDetails) {
-      throw new ApiError(404, `Payment details not found for order: ${orderId}`);
-    }
 
     res.json({
       paymentId: paymentDetails.id,
@@ -157,15 +132,9 @@ const getPaymentStatus = asyncHandler(async (req, res) => {
     console.error("Get PayOS payment status error:", error);
 
     if (error instanceof ApiError) {
-      res.status(error.statusCode).json({
-        status: "ERROR",
-        message: error.message
-      });
+      res.status(error.statusCode).json({ status: "ERROR", message: error.message });
     } else {
-      res.status(500).json({
-        status: "ERROR",
-        message: "Failed to get payment status"
-      });
+      res.status(500).json({ status: "ERROR", message: "Failed to get payment status" });
     }
   }
 });
@@ -179,14 +148,12 @@ const cancelPayOSPayment = asyncHandler(async (req, res) => {
       throw new ApiError(400, "Order ID is required");
     }
 
-    // Get payment transaction
     const paymentDetails = await payOSService.getPaymentDetails(orderId);
 
     if (paymentDetails.status === "COMPLETED") {
       throw new ApiError(400, "Cannot cancel completed payment");
     }
 
-    // Update payment status to cancelled
     await payOSService.refundPayment(orderId, 0, "Payment cancelled by user");
 
     res.json({
@@ -199,32 +166,59 @@ const cancelPayOSPayment = asyncHandler(async (req, res) => {
     console.error("Cancel PayOS payment error:", error);
 
     if (error instanceof ApiError) {
-      res.status(error.statusCode).json({
-        status: "ERROR",
-        message: error.message
-      });
+      res.status(error.statusCode).json({ status: "ERROR", message: error.message });
     } else {
-      res.status(500).json({
-        status: "ERROR",
-        message: "Failed to cancel payment"
-      });
+      res.status(500).json({ status: "ERROR", message: "Failed to cancel payment" });
     }
   }
 });
 
-// Handle PayOS return redirect (user completes payment)
+// Handle PayOS return redirect — query DB by orderCode
 const handlePayOSReturn = asyncHandler(async (req, res) => {
-  const { status, orderCode } = req.query;
-  if (status === "PAID" || status === "COMPLETED") {
-    res.redirect("/?payment=success");
-  } else {
-    res.redirect("/");
+  const { code, status, cancel, orderCode } = req.query;
+
+  console.log("PayOS Return:", req.query);
+
+  // Fetch payment + order from DB using orderCode
+  const paymentTx = await payOSService.getOrderByOrderCode(orderCode);
+
+  if (!paymentTx) {
+    return res.render("checkout_failed", {
+      message: "Không tìm thấy thông tin đơn hàng."
+    });
   }
+
+  const order = paymentTx.order;
+
+  if (
+    code === "00" &&
+    cancel === "false" &&
+    (status === "PAID" || status === "COMPLETED")
+  ) {
+    return res.render("checkout_success", {
+      transactionId: paymentTx.transactionId || orderCode,
+      orderCode: orderCode,
+      orderId: order.id,
+      orderTime: order.createdAt
+        ? new Date(order.createdAt).toLocaleString("vi-VN")
+        : new Date().toLocaleString("vi-VN")
+    });
+  }
+
+  return res.render("checkout_failed", {
+    message: "Thanh toán không thành công hoặc đã bị hủy."
+  });
 });
 
-// Handle PayOS cancel redirect (user cancels payment)
+// Handle PayOS cancel redirect
 const handlePayOSCancel = asyncHandler(async (req, res) => {
+  const { orderCode } = req.query;
   console.log("PayOS payment cancelled:", req.query);
+
+  if (orderCode) {
+    await payOSService.cancelByOrderCode(orderCode);
+  }
+
   res.redirect("/");
 });
 

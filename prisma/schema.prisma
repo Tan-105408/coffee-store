@@ -82,9 +82,10 @@ model PaymentTransaction {
   id               Int         @id @default(autoincrement())
   orderId          Int
   order            Order       @relation(fields: [orderId], references: [id])
+  orderCode        BigInt?     // PayOS orderCode — key to link webhook/return to order; BigInt vì Date.now() > Int max
   provider         String      // "cash", "vnpay", "payos"
   status           String      // "pending", "processing", "completed", "failed", "cancelled"
-  transactionId    String?    // Payment gateway transaction ID (VNP_TxnRef, PayOS orderCode)
+  transactionId    String?    // Payment gateway transaction ID
   amount           Float
   currency         String      @default("VND")
   errorCode        String?     // Payment gateway error code
@@ -92,6 +93,8 @@ model PaymentTransaction {
   paidAt           DateTime?    // When payment was completed
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
+
+  @@index([orderCode])
 }
 
 model Order {
