@@ -17,4 +17,8 @@ module.exports = {
     cancelUrl: process.env.PAYOS_CANCEL_URL || `http://localhost:${process.env.PORT || 3030}/payment/payos/cancel`,
     webhookSecret: process.env.PAYOS_WEBHOOK_SECRET,
   },
+  email: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
 };

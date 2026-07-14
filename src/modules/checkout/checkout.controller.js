@@ -1,6 +1,7 @@
 const checkoutService = require("./checkout.service");
 const asyncHandler = require("../../middlewares/asyncHandler");
 const payOSService = require("../payments/payos.service");
+const ordersService = require("../orders/orders.service");
 
 const getCheckout = asyncHandler(async (req, res) => {
   const { cartItems, total } = await checkoutService.getCheckoutData(req.user.id);
@@ -18,10 +19,25 @@ const processCheckout = asyncHandler(async (req, res) => {
   const amount = Math.round(total);
 
   if (paymentMethod === "cash") {
-    await checkoutService.createOrder(req.user.id, amount, "cash", cartItems);
+    const order = await checkoutService.createOrder(req.user.id, amount, "cash", cartItems);
     await checkoutService.clearCart(req.user.id);
+
+    const email = req.body.email || req.user.email;
+    if (email) {
+      ordersService.sendOrderConfirmation(email, {
+        orderId: order.id,
+        items: cartItems,
+        total: amount,
+        orderTime: new Date(order.createdAt).toLocaleString("vi-VN"),
+        paymentMethod: "cash",
+      });
+    }
+
     res.render("checkout_success", {
-      message: "Đặt hàng thành công! Vui lòng thanh toán khi nhận hàng."
+      transactionId: `COD-${order.id}`,
+      orderCode: null,
+      orderId: order.id,
+      orderTime: new Date(order.createdAt).toLocaleString("vi-VN"),
     });
   } else if (paymentMethod === "payos") {
     const order = await checkoutService.createOrder(req.user.id, amount, "payos", cartItems);

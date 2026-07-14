@@ -34,6 +34,7 @@ body {
   color: var(--co-text-main);
   line-height: 1.6;
   overflow-x: hidden;
+  padding-top: 76px; /* cho navbar fixed */
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -56,8 +57,13 @@ a:hover {
   color: var(--co-secondary);
 }
 
-/* Custom Glassmorphic Header */
+/* Custom Glassmorphic Header — fixed top */
 .co-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1030;
   background: rgba(92, 62, 53, 0.95) !important;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);

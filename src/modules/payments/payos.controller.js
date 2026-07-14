@@ -2,6 +2,7 @@ const asyncHandler = require("../../middlewares/asyncHandler");
 const ApiError = require("../../utils/ApiError");
 const payOSService = require("./payos.service");
 const CheckoutService = require("../checkout/checkout.service");
+const ordersService = require("../orders/orders.service");
 
 // Handle PayOS webhook
 const handlePayOSWebhook = asyncHandler(async (req, res) => {
@@ -42,6 +43,30 @@ const handlePayOSWebhook = asyncHandler(async (req, res) => {
     const result = await payOSService.processWebhook(webhookData);
 
     if (result.status === "SUCCESS") {
+      // Gửi email xác nhận fire-and-forget
+      if (data.status && ["paid", "success", "completed"].includes(data.status.toLowerCase())) {
+        payOSService.getOrderByOrderCode(data.orderCode)
+          .then((paymentTx) => {
+            if (paymentTx?.order?.user?.email) {
+              const order = paymentTx.order;
+              const items = order.orderItems.map((oi) => ({
+                name: oi.product.name,
+                quantity: oi.quantity,
+                price: oi.priceAtPurchase,
+                total: oi.priceAtPurchase * oi.quantity,
+              }));
+              ordersService.sendOrderConfirmation(order.user.email, {
+                orderId: order.id,
+                items,
+                total: order.totalAmount,
+                orderTime: new Date(order.createdAt).toLocaleString("vi-VN"),
+                paymentMethod: "payos",
+              });
+            }
+          })
+          .catch((err) => console.error("PayOS email send failed:", err.message));
+      }
+
       res.json({ status: "SUCCESS", message: result.message });
     } else {
       console.error("PayOS webhook processing failed:", result.message);
@@ -195,6 +220,23 @@ const handlePayOSReturn = asyncHandler(async (req, res) => {
     cancel === "false" &&
     (status === "PAID" || status === "COMPLETED")
   ) {
+    // Gửi email xác nhận cho PayOS return (fire-and-forget)
+    if (order?.user?.email) {
+      const items = order.orderItems.map((oi) => ({
+        name: oi.product.name,
+        quantity: oi.quantity,
+        price: oi.priceAtPurchase,
+        total: oi.priceAtPurchase * oi.quantity,
+      }));
+      ordersService.sendOrderConfirmation(order.user.email, {
+        orderId: order.id,
+        items,
+        total: order.totalAmount,
+        orderTime: new Date(order.createdAt).toLocaleString("vi-VN"),
+        paymentMethod: "payos",
+      });
+    }
+
     return res.render("checkout_success", {
       transactionId: paymentTx.transactionId || orderCode,
       orderCode: orderCode,
