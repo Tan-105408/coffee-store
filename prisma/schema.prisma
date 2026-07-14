@@ -56,6 +56,7 @@ model CartItem {
   productId Int
   product   Product @relation(fields: [productId], references: [id])
   quantity  Int     @default(1)
+  options   String?  @db.NVarChar(Max)
 }
 
 model RefreshToken {
@@ -123,4 +124,5 @@ model OrderItem {
   product         Product @relation(fields: [productId], references: [id])
   quantity        Int
   priceAtPurchase Float
+  options         String?  @db.NVarChar(Max)
 }

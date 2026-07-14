@@ -11,6 +11,7 @@ const createOrder = async (userId, totalAmount, paymentMethod, cartItems) => {
           productId: item.productId,
           quantity: item.quantity,
           priceAtPurchase: item.price,
+          options: item.options || undefined,
         })),
       },
     },
@@ -39,12 +40,17 @@ const getCheckoutData = async (userId) => {
     const price = Number(product.price) || 0;
     const discount = Number(product.discount) || 0;
     const priceAfterDiscount = price * (1 - discount / 100);
+    let options = null;
+    try { options = item.options ? JSON.parse(item.options) : null; } catch (e) { options = null; }
+    const toppingTotal = options?.toppings?.reduce((s, t) => s + (t.price || 0), 0) || 0;
+    const unitPrice = priceAfterDiscount + toppingTotal;
     return {
       productId: product.id,
       name: product.name,
-      price: parseFloat((priceAfterDiscount || 0).toFixed(2)),
+      price: parseFloat((unitPrice || 0).toFixed(2)),
       quantity: item.quantity,
-      total: parseFloat((priceAfterDiscount * item.quantity || 0).toFixed(2)),
+      options: options ? JSON.stringify(options) : undefined,
+      total: parseFloat((unitPrice * item.quantity || 0).toFixed(2)),
     };
   });
   const total = parseFloat(cartItems.reduce((sum, item) => sum + item.total, 0).toFixed(2));

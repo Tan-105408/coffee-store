@@ -93,6 +93,74 @@
               <% } %>
             </div>
 
+            <!-- Customization Options -->
+            <div class="mb-4">
+              <!-- Ice Level -->
+              <div class="mb-3">
+                <label class="fw-semibold text-muted small text-uppercase d-block mb-2">
+                  <i class="bi bi-snow2 me-1 text-info"></i> Độ đá
+                </label>
+                <div class="d-flex flex-wrap gap-2">
+                  <input type="radio" class="btn-check" name="iceLevel" id="ice-none" value="Không đá" checked>
+                  <label class="co-option-chip" for="ice-none">Không đá</label>
+
+                  <input type="radio" class="btn-check" name="iceLevel" id="ice-less" value="Ít đá">
+                  <label class="co-option-chip" for="ice-less">Ít đá</label>
+
+                  <input type="radio" class="btn-check" name="iceLevel" id="ice-normal" value="Bình thường">
+                  <label class="co-option-chip" for="ice-normal">Bình thường</label>
+
+                  <input type="radio" class="btn-check" name="iceLevel" id="ice-more" value="Nhiều đá">
+                  <label class="co-option-chip" for="ice-more">Nhiều đá</label>
+                </div>
+              </div>
+
+              <!-- Sugar Level -->
+              <div class="mb-3">
+                <label class="fw-semibold text-muted small text-uppercase d-block mb-2">
+                  <i class="bi bi-droplet-half me-1 text-warning"></i> Độ ngọt
+                </label>
+                <div class="d-flex flex-wrap gap-2">
+                  <input type="radio" class="btn-check" name="sugarLevel" id="sugar-low" value="Ít ngọt (25%)">
+                  <label class="co-option-chip" for="sugar-low">Ít ngọt</label>
+
+                  <input type="radio" class="btn-check" name="sugarLevel" id="sugar-normal" value="Bình thường (50%)" checked>
+                  <label class="co-option-chip" for="sugar-normal">Bình thường</label>
+
+                  <input type="radio" class="btn-check" name="sugarLevel" id="sugar-high" value="Nhiều ngọt (75%)">
+                  <label class="co-option-chip" for="sugar-high">Nhiều ngọt</label>
+                </div>
+              </div>
+
+              <!-- Toppings -->
+              <div>
+                <label class="fw-semibold text-muted small text-uppercase d-block mb-2">
+                  <i class="bi bi-plus-circle me-1 text-success"></i> Topping <span class="text-lowercase fw-normal">(có thể chọn nhiều)</span>
+                </label>
+                <div class="d-flex flex-wrap gap-2">
+                  <input type="checkbox" class="btn-check" name="toppings" id="top-whipping" value="whipping" data-price="5000">
+                  <label class="co-option-chip co-option-chip-check" for="top-whipping">
+                    Whipping cream <span class="co-option-price">+5.000đ</span>
+                  </label>
+
+                  <input type="checkbox" class="btn-check" name="toppings" id="top-cheese" value="cheese" data-price="8000">
+                  <label class="co-option-chip co-option-chip-check" for="top-cheese">
+                    Kem cheese <span class="co-option-price">+8.000đ</span>
+                  </label>
+
+                  <input type="checkbox" class="btn-check" name="toppings" id="top-coffee-jelly" value="coffee_jelly" data-price="6000">
+                  <label class="co-option-chip co-option-chip-check" for="top-coffee-jelly">
+                    Thạch cà phê <span class="co-option-price">+6.000đ</span>
+                  </label>
+
+                  <input type="checkbox" class="btn-check" name="toppings" id="top-boba" value="boba" data-price="5000">
+                  <label class="co-option-chip co-option-chip-check" for="top-boba">
+                    Trân châu <span class="co-option-price">+5.000đ</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
             <!-- Quantity Selector -->
             <div class="d-flex align-items-center gap-3 mb-4">
               <label for="quantity" class="fw-semibold text-muted small text-uppercase">Số lượng:</label>
@@ -178,19 +246,38 @@
   
   <!-- Local calculation scripts -->
   <script>
-    // Safely embed product data
     const productData = {
       price: "<%= product.price || 0 %>",
       discount: "<%= product.discount || 0 %>"
     };
     const basePrice = parseFloat(productData.price) * (1 - parseFloat(productData.discount) / 100);
-    
+
+    const TOPPING_PRICES = {
+      whipping: 5000,
+      cheese: 8000,
+      coffee_jelly: 6000,
+      boba: 5000,
+    };
+
+    const TOPPING_LABELS = {
+      whipping: "Whipping cream",
+      cheese: "Kem cheese",
+      coffee_jelly: "Thạch cà phê",
+      boba: "Trân châu",
+    };
+
     const quantityInput = document.getElementById("quantity");
     const totalAmountSpan = document.getElementById("total-amount");
 
+    const getToppingTotal = () => {
+      return [...document.querySelectorAll('input[name="toppings"]:checked')]
+        .reduce((sum, cb) => sum + (TOPPING_PRICES[cb.value] || 0), 0);
+    };
+
     const updateCalculatedPrice = () => {
       const qty = parseInt(quantityInput.value) || 1;
-      const total = basePrice * qty;
+      const toppingTotal = getToppingTotal();
+      const total = (basePrice + toppingTotal) * qty;
       totalAmountSpan.textContent = total.toLocaleString('vi-VN');
     };
 
@@ -212,6 +299,66 @@
         quantityInput.value = 1;
       }
       updateCalculatedPrice();
+    });
+
+    // Listen to topping changes
+    document.querySelectorAll('input[name="toppings"]').forEach(cb => {
+      cb.addEventListener("change", updateCalculatedPrice);
+    });
+
+    // Override add-to-cart to include options
+    document.getElementById("add-to-cart-btn").addEventListener("click", async function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const productId = this.getAttribute("data-id");
+      const qty = parseInt(quantityInput.value) || 1;
+
+      // Gather selected options
+      const iceEl = document.querySelector('input[name="iceLevel"]:checked');
+      const sugarEl = document.querySelector('input[name="sugarLevel"]:checked');
+      const toppingEls = document.querySelectorAll('input[name="toppings"]:checked');
+
+      const options = {
+        ice: iceEl ? iceEl.value : "Bình thường",
+        sugar: sugarEl ? sugarEl.value : "Bình thường",
+        toppings: [...toppingEls].map(cb => ({
+          id: cb.value,
+          name: TOPPING_LABELS[cb.value],
+          price: TOPPING_PRICES[cb.value],
+        })),
+        toppingTotal: getToppingTotal(),
+      };
+
+      try {
+        const response = await apiFetch("/cart/add", {
+          method: "POST",
+          body: JSON.stringify({ productId, quantity: qty, options }),
+        });
+        const data = await response.json();
+        if (data.success) {
+          Swal.fire({
+            text: "Đã thêm vào giỏ hàng!",
+            icon: "success",
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true,
+            iconColor: "#2a9d8f",
+            background: "#fff",
+            color: "#2b221e",
+          });
+        } else {
+          Swal.fire({
+            text: data.message || "Lỗi khi thêm vào giỏ.",
+            icon: "error",
+            toast: true, position: "top-end", showConfirmButton: false, timer: 3000,
+          });
+        }
+      } catch (err) {
+        Swal.fire({ text: "Có lỗi xảy ra.", icon: "error", toast: true, position: "top-end", showConfirmButton: false, timer: 3000 });
+      }
     });
   </script>
 </body>

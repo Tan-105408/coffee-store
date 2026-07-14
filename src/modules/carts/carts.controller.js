@@ -12,11 +12,17 @@ const getCart = asyncHandler(async (req, res) => {
     const product = item.product;
     const priceAfterDiscount =
       product.price * (1 - (product.discount || 0) / 100);
+    let options = null;
+    try { options = item.options ? JSON.parse(item.options) : null; } catch (e) { options = null; }
+    const toppingTotal = options?.toppings?.reduce((s, t) => s + (t.price || 0), 0) || 0;
+    const unitPrice = priceAfterDiscount + toppingTotal;
     return {
       product: product,
       quantity: item.quantity,
       priceAfterDiscount,
-      total: priceAfterDiscount * item.quantity,
+      options,
+      unitPrice,
+      total: unitPrice * item.quantity,
     };
   });
 
@@ -25,11 +31,11 @@ const getCart = asyncHandler(async (req, res) => {
 });
 
 const addItemToCart = asyncHandler(async (req, res) => {
-  const { productId, quantity } = req.body;
+  const { productId, quantity, options } = req.body;
   if (!productId) {
     throw new ApiError(400, "Product ID is required");
   }
-  const cart = await cartService.addToCart(req.user.id, productId, quantity);
+  const cart = await cartService.addToCart(req.user.id, productId, quantity, options || null);
   res.json({ success: true, message: "Added to cart", cart });
 });
 

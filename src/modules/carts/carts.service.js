@@ -13,10 +13,10 @@ const getCartByUserId = async (userId) => {
   });
 };
 
-const addToCart = async (userId, productId, quantity = 1) => {
+const addToCart = async (userId, productId, quantity = 1, options = null) => {
   userId = parseInt(userId);
   productId = parseInt(productId);
-  
+
   let cart = await prisma.cart.findFirst({
     where: { userId },
   });
@@ -27,11 +27,14 @@ const addToCart = async (userId, productId, quantity = 1) => {
     });
   }
 
-  const existingItem = await prisma.cartItem.findFirst({
-    where: {
-      cartId: cart.id,
-      productId: productId,
-    },
+  // Find existing item with matching options
+  const allItems = await prisma.cartItem.findMany({
+    where: { cartId: cart.id, productId },
+  });
+
+  const optionsKey = options ? JSON.stringify(options) : null;
+  const existingItem = allItems.find((item) => {
+    return (item.options || null) === optionsKey;
   });
 
   if (existingItem) {
@@ -43,8 +46,9 @@ const addToCart = async (userId, productId, quantity = 1) => {
     return await prisma.cartItem.create({
       data: {
         cartId: cart.id,
-        productId: productId,
-        quantity: quantity,
+        productId,
+        quantity,
+        options: optionsKey || undefined,
       },
     });
   }

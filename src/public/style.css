@@ -438,3 +438,45 @@ a:hover {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--co-primary);
 }
+
+/* Product Option Chips */
+.co-option-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 50px;
+  border: 1.5px solid #e0d6ce;
+  background: #fff;
+  color: var(--co-text-main);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--co-transition);
+  user-select: none;
+}
+
+.co-option-chip:hover {
+  border-color: var(--co-primary-light);
+  background: #faf5ef;
+}
+
+.btn-check:checked + .co-option-chip {
+  background: var(--co-primary);
+  border-color: var(--co-primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(92, 62, 53, 0.2);
+}
+
+.btn-check:checked + .co-option-chip-check {
+  background: var(--co-success);
+  border-color: var(--co-success);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(42, 157, 143, 0.2);
+}
+
+.co-option-price {
+  font-size: 0.75rem;
+  opacity: 0.85;
+  font-weight: 400;
+}
