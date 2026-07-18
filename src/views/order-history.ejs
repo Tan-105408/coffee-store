@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đơn hàng - Coffee Store</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="d-flex flex-column min-vh-100">
+  <%- include('partials/navbar', { activePage: 'orders' }) %>
+
+  <main class="container flex-grow-1 py-5">
+    <div class="d-flex align-items-center mb-4 gap-3">
+      <h2 class="font-serif fw-bold m-0"><i class="bi bi-bag-check me-2"></i> Đơn hàng của tôi</h2>
+      <% if (orders && orders.length > 0) { %>
+        <span class="badge px-3 py-2" style="background:var(--co-bg);color:var(--co-text-secondary);border:1px solid var(--co-border-strong);"><%= orders.length %> đơn</span>
+      <% } %>
+    </div>
+
+    <% if (orders && orders.length > 0) { %>
+      <% orders.forEach(order => {
+        const statusMap = {
+          pending: { label: 'Đang chờ', bg: 'var(--co-warning)', text: '#fff' },
+          processing: { label: 'Đang xử lý', bg: 'var(--co-primary-light)', text: '#fff' },
+          completed: { label: 'Hoàn thành', bg: 'var(--co-success)', text: '#fff' },
+          cancelled: { label: 'Đã hủy', bg: 'var(--co-danger)', text: '#fff' }
+        };
+        const st = statusMap[order.status] || statusMap.pending;
+      %>
+        <div class="order-card">
+          <div class="order-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+              <span class="fw-bold" style="color:var(--co-text);">Đơn hàng #<%= order.id %></span>
+              <span class="ms-2 small" style="color:var(--co-text-muted);"><i class="bi bi-clock me-1"></i><%= new Date(order.createdAt).toLocaleString('vi-VN') %></span>
+              <% if (order.paymentTimestamp) { %>
+                <span class="ms-2 small text-success"><i class="bi bi-check-circle me-1"></i>Thanh toán: <%= new Date(order.paymentTimestamp).toLocaleString('vi-VN') %></span>
+              <% } %>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="status-badge" style="background:<%= st.bg %>;color:<%= st.text %>;"><%= st.label %></span>
+              <span class="fw-bold" style="color:var(--co-success);"><%= order.totalAmount ? order.totalAmount.toLocaleString('vi-VN') : 0 %>đ</span>
+            </div>
+          </div>
+
+          <!-- Order Notes (Admin notes) -->
+          <% if (order.note) { %>
+            <div class="order-note mb-3 p-3 rounded" style="background:rgba(244,162,97,0.1);border:1px solid var(--co-warning);">
+              <div class="d-flex align-items-start gap-2">
+                <i class="bi bi-info-circle-fill text-warning" style="font-size:1.2rem;margin-top:2px;"></i>
+                <div class="flex-grow-1">
+                  <small class="fw-bold text-warning">Ghi chú từ quán:</small>
+                  <div class="mt-1" style="color:var(--co-text);"><%= order.note %></div>
+                </div>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- Estimated Delivery Time -->
+          <% if (order.deliveryTime) { %>
+            <div class="order-delivery mb-3 p-3 rounded d-flex align-items-center gap-3" style="background:rgba(42,157,143,0.1);border:1px solid var(--co-success);">
+              <i class="bi bi-truck text-success" style="font-size:1.5rem;"></i>
+              <div>
+                <small class="fw-bold text-success">Thời gian giao hàng dự kiến:</small>
+                <div class="fw-bold" style="color:var(--co-text);"><%= new Date(order.deliveryTime).toLocaleString('vi-VN') %></div>
+              </div>
+            </div>
+          <% } %>
+
+          <% order.orderItems.forEach(item => {
+            const product = item.product;
+            const hasDiscount = product && product.discount > 0;
+            const finalPrice = hasDiscount
+              ? (Number(product.price) * (1 - Number(product.discount) / 100))
+              : Number(product.price);
+          %>
+            <div class="order-item">
+              <img src="<%= product ? product.image : '' %>" alt="<%= product ? product.name : '' %>">
+              <div class="flex-grow-1">
+                <div class="fw-bold" style="color:var(--co-text);"><%= product ? product.name : 'Sản phẩm đã xóa' %></div>
+                <small style="color:var(--co-text-muted);">
+                  x<%= item.quantity %><% if (product) { %> &middot; <%= finalPrice.toLocaleString('vi-VN') %>đ/sp<% } %>
+                </small>
+                <% if (item.options) { %>
+                  <div class="mt-1">
+                    <small style="color:var(--co-text-muted);">
+                      <% try {
+                        const opts = typeof item.options === 'string' ? JSON.parse(item.options) : item.options;
+                        if (opts.ice) { %><span class="badge me-1" style="background:var(--co-bg);color:var(--co-text-secondary);border:1px solid var(--co-border);"><i class="bi bi-snow2 me-1"></i><%= opts.ice %></span><% } %>
+                        <% if (opts.sugar) { %><span class="badge me-1" style="background:var(--co-bg);color:var(--co-text-secondary);border:1px solid var(--co-border);"><i class="bi bi-droplet me-1"></i><%= opts.sugar %></span><% } %>
+                        <% if (opts.toppings && opts.toppings.length > 0) { opts.toppings.forEach(function(t) { %>
+                          <span class="badge me-1" style="background:rgba(61,139,110,0.08);color:var(--co-success);border:1px solid rgba(61,139,110,0.15);"><i class="bi bi-plus-circle me-1"></i><%= t.name %></span>
+                        <% }); } %>
+                      <% } catch(e) {} %>
+                    </small>
+                  </div>
+                <% } %>
+              </div>
+              <div class="text-end">
+                <div class="fw-bold" style="color:var(--co-text);"><%= item.priceAtPurchase ? Number(item.priceAtPurchase).toLocaleString('vi-VN') : 0 %>đ</div>
+                <% if (product) { %>
+                  <button class="btn btn-sm mt-1 review-btn" style="color:var(--co-secondary);border:1px solid var(--co-border-strong);"
+                    data-product-id="<%= product.id %>"
+                    data-product-name="<%= product.name %>"
+                    data-product-image="<%= product.image %>"
+                    data-bs-toggle="modal" data-bs-target="#reviewModal">
+                    <i class="bi bi-star me-1"></i>Đánh giá
+                  </button>
+                <% } %>
+              </div>
+            </div>
+          <% }) %>
+
+          <!-- Payment Info -->
+          <div class="order-payment mt-3 p-3 rounded d-flex justify-content-between align-items-center flex-wrap gap-2" style="background:var(--co-bg);border:1px solid var(--co-border);">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-credit-card text-co-secondary"></i>
+              <div>
+                <small style="color:var(--co-text-muted);">Phương thức:</small>
+                <div class="fw-bold" style="color:var(--co-text);"><%= order.paymentMethod === 'payos' ? 'PayOS (Online)' : order.paymentMethod === 'vnpay' ? 'VNPay' : 'Tiền mặt (COD)' %></div>
+              </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-cash-stack text-co-secondary"></i>
+              <div>
+                <small style="color:var(--co-text-muted);">Trạng thái TT:</small>
+                <div class="fw-bold" style="color:<%= order.paymentStatus === 'completed' ? 'var(--co-success)' : order.paymentStatus === 'failed' ? 'var(--co-danger)' : 'var(--co-warning)' %>;">
+                  <%= order.paymentStatus === 'completed' ? 'Đã thanh toán' : order.paymentStatus === 'failed' ? 'Thất bại' : 'Chờ thanh toán' %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <div class="co-empty-state">
+        <i class="bi bi-bag-x text-co-muted" style="font-size:4rem;"></i>
+        <h4 class="mt-4 font-serif fw-bold">Chưa có đơn hàng</h4>
+        <p class="mb-4" style="color:var(--co-text-muted);">Khám phá thực đơn và đặt hàng ngay!</p>
+        <a href="/" class="co-btn co-btn-primary px-4 py-2"><i class="bi bi-shop me-2"></i> Mua sắm ngay</a>
+      </div>
+    <% } %>
+  </main>
+
+  <!-- Review Modal -->
+  <div class="modal fade" id="reviewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius:var(--co-radius-lg);">
+        <div class="modal-header" style="background:var(--co-primary);color:#fff;border-radius:var(--co-radius-lg) var(--co-radius-lg) 0 0;">
+          <h5 class="modal-title fw-bold"><i class="bi bi-star-fill me-2 text-co-warning"></i>Đánh giá sản phẩm</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="d-flex align-items-center gap-3 mb-4 p-3 rounded-3" style="background:var(--co-bg);">
+            <img id="reviewProductImage" src="" alt="" style="width:56px;height:56px;border-radius:var(--co-radius-sm);object-fit:cover;">
+            <span id="reviewProductName" class="fw-bold" style="color:var(--co-text);"></span>
+          </div>
+
+          <input type="hidden" id="reviewProductId">
+
+          <label class="form-label fw-semibold small text-uppercase mb-2" style="color:var(--co-text-muted);">Đánh giá sao</label>
+          <div class="star-rating mb-3" id="starRating">
+            <i class="bi bi-star" data-star="1"></i>
+            <i class="bi bi-star" data-star="2"></i>
+            <i class="bi bi-star" data-star="3"></i>
+            <i class="bi bi-star" data-star="4"></i>
+            <i class="bi bi-star" data-star="5"></i>
+          </div>
+
+          <label class="form-label fw-semibold small text-uppercase" style="color:var(--co-text-muted);">Nhận xét</label>
+          <textarea id="reviewComment" class="form-control co-form-control" rows="3" placeholder="Chia sẻ cảm nhận của bạn..."></textarea>
+        </div>
+        <div class="modal-footer border-0 px-4 pb-4" style="border-color:var(--co-border) !important;">
+          <button type="button" class="co-btn co-btn-secondary px-3" data-bs-dismiss="modal">Hủy</button>
+          <button type="button" class="co-btn co-btn-primary px-4" id="submitReviewBtn">
+            <i class="bi bi-send me-1"></i> Gửi đánh giá
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%- include('partials/footer') %>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/script.js"></script>
+  <script>
+    let selectedRating = 0;
+    let currentReviewBtn = null;
+
+    function markAsReviewed(btn) {
+      btn.outerHTML = '<span class="btn btn-sm mt-1" disabled style="color:var(--co-success);"><i class="bi bi-check-circle me-1"></i>Đã đánh giá</span>';
+    }
+
+    (async function() {
+      const btns = document.querySelectorAll('.review-btn');
+      if (!btns.length) return;
+      const ids = [...btns].map(b => b.dataset.productId).join(',');
+      try {
+        const res = await fetch('/review/check-reviewed?productIds=' + ids, { credentials: 'same-origin' });
+        const data = await res.json();
+        btns.forEach(btn => { if (data[btn.dataset.productId]) markAsReviewed(btn); });
+      } catch(e) {}
+    })();
+
+    const stars = document.querySelectorAll('#starRating i');
+    stars.forEach(star => {
+      star.addEventListener('click', function() { selectedRating = parseInt(this.dataset.star); updateStars(); });
+      star.addEventListener('mouseenter', function() {
+        const hoverStar = parseInt(this.dataset.star);
+        stars.forEach(s => { s.classList.toggle('active', parseInt(s.dataset.star) <= hoverStar); });
+      });
+    });
+
+    document.getElementById('starRating').addEventListener('mouseleave', updateStars);
+
+    function updateStars() {
+      stars.forEach(s => {
+        s.classList.toggle('active', parseInt(s.dataset.star) <= selectedRating);
+        s.className = parseInt(s.dataset.star) <= selectedRating ? 'bi bi-star-fill active' : 'bi bi-star';
+      });
+    }
+
+    document.querySelectorAll('.review-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        currentReviewBtn = this;
+        document.getElementById('reviewProductId').value = this.dataset.productId;
+        document.getElementById('reviewProductName').textContent = this.dataset.productName;
+        document.getElementById('reviewProductImage').src = this.dataset.productImage;
+        document.getElementById('reviewComment').value = '';
+        selectedRating = 0;
+        updateStars();
+      });
+    });
+
+    document.getElementById('submitReviewBtn').addEventListener('click', async function() {
+      const productId = parseInt(document.getElementById('reviewProductId').value);
+      const comment = document.getElementById('reviewComment').value.trim();
+      if (!selectedRating) { Swal.fire({ text: 'Vui lòng chọn số sao!', icon: 'warning', confirmButtonColor: '#4A2C2A' }); return; }
+      const btn = this; const originalText = btn.innerHTML;
+      btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang gửi...';
+      try {
+        const response = await fetch('/review/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ productId, rating: selectedRating, comment }) });
+        const data = await response.json();
+        if (response.ok) {
+          Swal.fire({ text: 'Cảm ơn bạn!', icon: 'success', confirmButtonColor: '#3D8B6E', timer: 2000, timerProgressBar: true, showConfirmButton: false });
+          bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide();
+        } else { Swal.fire({ text: data.message || 'Có lỗi!', icon: 'error', confirmButtonColor: '#4A2C2A' }); }
+      } catch(err) { Swal.fire({ text: 'Vui lòng đăng nhập!', icon: 'error', confirmButtonColor: '#4A2C2A' }); }
+      finally { btn.disabled = false; btn.innerHTML = originalText; }
+    });
+  </script>
+  <script src="/client-logger.js"></script>
+</body>
+</html>

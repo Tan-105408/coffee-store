@@ -82,9 +82,9 @@ class PayOSService {
       await prisma.paymentTransaction.create({
         data: {
           orderId: parseInt(orderId),
-          orderCode: BigInt(orderCode),
-          provider: "PAYOS",
-          status: "PENDING",
+          orderCode: orderCode.toString(),
+          provider: "payos",
+          status: "pending",
           transactionId: paymentData.data?.id?.toString(),
           amount: amount,
           currency: "VND",
@@ -97,8 +97,8 @@ class PayOSService {
         where: { id: parseInt(orderId) },
         data: {
           status: "processing",
-          paymentMethod: "PAYOS",
-          paymentStatus: "PENDING"
+          paymentMethod: "payos",
+          paymentStatus: "pending"
         }
       });
 
@@ -161,7 +161,7 @@ class PayOSService {
 
       // Find payment transaction by orderCode
       const paymentTx = await prisma.paymentTransaction.findFirst({
-        where: { orderCode: Number(orderCode) },
+        where: { orderCode: String(orderCode) },
         include: { order: true }
       });
 
@@ -173,7 +173,7 @@ class PayOSService {
       const order = paymentTx.order;
 
       // Skip if already processed
-      if (paymentTx.status === "COMPLETED" && status.toLowerCase() !== "refund") {
+      if (paymentTx.status === "completed" && status.toLowerCase() !== "refund") {
         console.log(`Order ${order.id} already completed, skipping webhook`);
         return { status: "SUCCESS", message: "Already processed" };
       }
@@ -191,28 +191,28 @@ class PayOSService {
         case 'paid':
         case 'success':
         case 'completed':
-          paymentUpdateData.status = 'COMPLETED';
+          paymentUpdateData.status = 'completed';
           if (transactionId) paymentUpdateData.transactionId = transactionId.toString();
           orderUpdateData.status = 'completed';
-          orderUpdateData.paymentStatus = 'COMPLETED';
+          orderUpdateData.paymentStatus = 'completed';
           orderUpdateData.paymentTimestamp = paidAt ? new Date(paidAt * 1000) : new Date();
           break;
 
         case 'cancelled':
-          paymentUpdateData.status = 'CANCELLED';
+          paymentUpdateData.status = 'cancelled';
           orderUpdateData.status = 'cancelled';
-          orderUpdateData.paymentStatus = 'CANCELLED';
+          orderUpdateData.paymentStatus = 'cancelled';
           break;
 
         case 'failed':
-          paymentUpdateData.status = 'FAILED';
+          paymentUpdateData.status = 'failed';
           orderUpdateData.status = 'cancelled';
-          orderUpdateData.paymentStatus = 'FAILED';
+          orderUpdateData.paymentStatus = 'failed';
           break;
 
         default:
-          paymentUpdateData.status = status.toUpperCase();
-          orderUpdateData.paymentStatus = status.toUpperCase();
+          paymentUpdateData.status = 'pending';
+          orderUpdateData.paymentStatus = 'pending';
       }
 
       await prisma.$transaction([
@@ -238,7 +238,7 @@ class PayOSService {
   // Cancel payment by PayOS orderCode (used when user cancels on PayOS page)
   async cancelByOrderCode(orderCode) {
     const paymentTx = await prisma.paymentTransaction.findFirst({
-      where: { orderCode: BigInt(orderCode) }
+      where: { orderCode: String(orderCode) }
     });
 
     if (!paymentTx) {
@@ -246,16 +246,16 @@ class PayOSService {
       return false;
     }
 
-    if (paymentTx.status === "COMPLETED") return false;
+    if (paymentTx.status === "completed") return false;
 
     await prisma.$transaction([
       prisma.paymentTransaction.update({
         where: { id: paymentTx.id },
-        data: { status: "CANCELLED", updatedAt: new Date() }
+        data: { status: "cancelled", updatedAt: new Date() }
       }),
       prisma.order.update({
         where: { id: paymentTx.orderId },
-        data: { status: "cancelled", paymentStatus: "CANCELLED", updatedAt: new Date() }
+        data: { status: "cancelled", paymentStatus: "cancelled", updatedAt: new Date() }
       })
     ]);
 
@@ -266,7 +266,7 @@ class PayOSService {
   // Find order by PayOS orderCode (for return URL)
   async getOrderByOrderCode(orderCode) {
     const paymentTx = await prisma.paymentTransaction.findFirst({
-      where: { orderCode: Number(orderCode) },
+      where: { orderCode: String(orderCode) },
       include: {
         order: {
           include: {
@@ -312,7 +312,7 @@ class PayOSService {
     const paymentTransaction = await prisma.paymentTransaction.findFirst({
       where: {
         orderId: parseInt(orderId),
-        provider: "PAYOS"
+        provider: "payos"
       }
     });
 
@@ -320,12 +320,12 @@ class PayOSService {
       throw new ApiError(404, `Payment not found for order: ${orderId}`);
     }
 
-    if (paymentTransaction.status === "COMPLETED") {
+    if (paymentTransaction.status === "completed") {
       await prisma.$transaction([
         prisma.paymentTransaction.update({
           where: { id: paymentTransaction.id },
           data: {
-            status: "REFUNDED",
+            status: "cancelled",
             errorCode: "REFUNDED",
             errorMessage: reason || "Refund processed",
             updatedAt: new Date()
@@ -335,7 +335,25 @@ class PayOSService {
           where: { id: parseInt(orderId) },
           data: {
             status: "cancelled",
-            paymentStatus: "REFUNDED"
+            paymentStatus: "cancelled"
+          }
+        })
+      ]);
+    } else if (paymentTransaction.status === "pending" || paymentTransaction.status === "processing") {
+      await prisma.$transaction([
+        prisma.paymentTransaction.update({
+          where: { id: paymentTransaction.id },
+          data: {
+            status: "cancelled",
+            errorMessage: reason || "Payment cancelled",
+            updatedAt: new Date()
+          }
+        }),
+        prisma.order.update({
+          where: { id: parseInt(orderId) },
+          data: {
+            status: "cancelled",
+            paymentStatus: "cancelled"
           }
         })
       ]);

@@ -3,9 +3,6 @@ const { prisma } = require("../../config/db");
 const getAllProducts = async (filters) => {
   const { search, category, minPrice, maxPrice } = filters;
   let where = {};
-  if (search) {
-    where.name = { contains: search };
-  }
   if (category) {
     where.category = category;
   }
@@ -14,7 +11,17 @@ const getAllProducts = async (filters) => {
     if (minPrice) where.price.gte = Number(minPrice);
     if (maxPrice) where.price.lte = Number(maxPrice);
   }
-  return await prisma.product.findMany({ where });
+  let products = await prisma.product.findMany({ where });
+  // SQL Server Prisma không hỗ trợ mode: "insensitive" → filter bằng JS
+  if (search) {
+    const q = search.toLowerCase();
+    products = products.filter(p =>
+      (p.name && p.name.toLowerCase().includes(q)) ||
+      (p.description && p.description.toLowerCase().includes(q)) ||
+      (p.category && p.category.toLowerCase().includes(q))
+    );
+  }
+  return products;
 };
 
 const getProductById = async (id) => {

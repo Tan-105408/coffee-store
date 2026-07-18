@@ -1,58 +1,65 @@
 const authService = require("./auth.service");
-const { setTokenCookies, clearTokenCookies } = require("../../utils/cookie");
 const asyncHandler = require("../../middlewares/asyncHandler");
 
 const register = asyncHandler(async (req, res) => {
-  const user = await authService.register(req.body);
-  const { accessToken, refreshToken } = await authService.generateAuthTokens(user);
-  setTokenCookies(res, accessToken, refreshToken);
-  res.redirect("/");
+  try {
+    const user = await authService.register(req.body);
+    req.session.userId = user.id;
+    res.redirect("/");
+  } catch (err) {
+    res.render("register", { error: err.message || "Đăng ký thất bại" });
+  }
 });
 
 const login = asyncHandler(async (req, res) => {
-  const { username, password } = req.body;
-  const user = await authService.login(username, password);
-  const { accessToken, refreshToken } = await authService.generateAuthTokens(user);
-  setTokenCookies(res, accessToken, refreshToken);
-  res.redirect("/");
+  try {
+    const { username, password } = req.body;
+    const user = await authService.login(username, password);
+    req.session.userId = user.id;
+    res.redirect("/");
+  } catch (err) {
+    res.render("login", { error: err.message || "Sai tên đăng nhập hoặc mật khẩu" });
+  }
 });
 
 const googleLogin = asyncHandler(async (req, res) => {
   const { idToken } = req.body;
   const user = await authService.loginWithGoogle(idToken);
-  const { accessToken, refreshToken } = await authService.generateAuthTokens(user);
-  setTokenCookies(res, accessToken, refreshToken);
-  res.status(200).json({ 
+  req.session.userId = user.id;
+  res.status(200).json({
     message: "Đăng nhập Google thành công",
-    redirectUrl: "/" 
+    redirectUrl: "/",
   });
 });
 
-const refresh = asyncHandler(async (req, res) => {
-  const refreshToken = req.cookies.refreshToken;
-  const tokens = await authService.refreshAuth(refreshToken);
-  setTokenCookies(res, tokens.accessToken, tokens.refreshToken);
-  res.json({ message: "Token refreshed" });
-});
-
 const logout = asyncHandler(async (req, res) => {
-  const refreshToken = req.cookies.refreshToken;
-  await authService.logout(refreshToken);
-  clearTokenCookies(res);
-  res.redirect("/"); // Redirect back to home after logout
+  req.session.destroy(() => {
+    res.clearCookie("connect.sid");
+    res.redirect("/");
+  });
 });
-
-const getLogin = (req, res) => {
-  res.render("login");
-};
 
 const getRegister = (req, res) => {
-  res.render("register");
+  res.render("register", { error: req.query.error || null });
 };
 
 const getProfile = asyncHandler(async (req, res) => {
   res.render("profile", { user: req.user });
 });
+
+const getForgotPassword = (req, res) => {
+  res.render("forgot-password");
+};
+
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  // Always return success to prevent email enumeration
+  res.json({ message: "Nếu email tồn tại, hướng dẫn đặt lại mật khẩu đã được gửi." });
+});
+
+const getLogin = (req, res) => {
+  res.render("login", { error: req.query.error || null });
+};
 
 const updateProfile = asyncHandler(async (req, res) => {
   const user = await authService.updateProfile(req.user.id, req.body);
@@ -63,10 +70,11 @@ module.exports = {
   register,
   login,
   googleLogin,
-  refresh,
   logout,
   getLogin,
   getRegister,
   getProfile,
+  getForgotPassword,
+  forgotPassword,
   updateProfile,
 };

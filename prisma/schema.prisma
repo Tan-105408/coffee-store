@@ -8,14 +8,47 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  user
+  admin
+}
+
+enum OrderStatus {
+  pending
+  processing
+  completed
+  cancelled
+}
+
+enum PaymentMethod {
+  cash
+  vnpay
+  payos
+}
+
+enum PaymentStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+enum TransactionStatus {
+  pending
+  processing
+  completed
+  failed
+  cancelled
+}
+
 model User {
   id            Int            @id @default(autoincrement())
   username      String
   email         String         @unique
   password      String?
-  role          String         @default("user") // user, admin
+  role          Role           @default(user)
   isActive      Boolean        @default(true)
-  googleId      String?
+  googleId      String?        @unique
   address       String?        @db.NVarChar(Max)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
@@ -23,106 +56,137 @@ model User {
   carts         Cart[]
   orders        Order[]
   refreshTokens RefreshToken[]
+
+  @@index([role])
 }
 
 model Product {
-  id         Int         @id @default(autoincrement())
-  name       String
-  price      Float
-  image      String
-  description String?     @db.NVarChar(Max)
-  category   String      @default("coffee")
-  discount   Int         @default(0)
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  reviews    Review[]
-  cartItems  CartItem[]
-  orderItems OrderItem[]
+  id           Int         @id @default(autoincrement())
+  name         String
+  price        Float
+  image        String
+  description  String?     @db.NVarChar(Max)
+  category     String      @default("Cà phê")
+  discount     Int         @default(0)
+  isBestSeller Boolean     @default(false)
+  promoTag     String?     @db.NVarChar(100)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  reviews      Review[]
+  cartItems    CartItem[]
+  orderItems   OrderItem[]
+
+  @@index([category])
+  @@index([isBestSeller])
 }
 
 model Cart {
   id        Int        @id @default(autoincrement())
   userId    Int
-  user      User       @relation(fields: [userId], references: [id])
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   items     CartItem[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+
+  @@index([userId])
 }
 
 model CartItem {
   id        Int     @id @default(autoincrement())
   cartId    Int
-  cart      Cart    @relation(fields: [cartId], references: [id])
+  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
   productId Int
-  product   Product @relation(fields: [productId], references: [id])
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   quantity  Int     @default(1)
-  options   String?  @db.NVarChar(Max)
+  options   String?  @db.NVarChar(Max) // JSON: { size: "L", sugar: "50%", ice: "normal", toppings: [] }
+
+  @@index([cartId])
+  @@index([productId])
+  @@unique([cartId, productId, options]) // prevent duplicate items with same options
 }
 
 model RefreshToken {
   id        Int      @id @default(autoincrement())
   token     String   @unique
   userId    Int
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model Review {
   id        Int      @id @default(autoincrement())
   userId    Int
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   productId Int
-  product   Product  @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   rating    Int
   comment   String?  @db.NVarChar(Max)
   createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([productId])
+  @@unique([userId, productId]) // one review per user per product
 }
 
 model PaymentTransaction {
-  id               Int         @id @default(autoincrement())
-  orderId          Int
-  order            Order       @relation(fields: [orderId], references: [id])
-  orderCode        BigInt?     // PayOS orderCode — key to link webhook/return to order; BigInt vì Date.now() > Int max
-  provider         String      // "cash", "vnpay", "payos"
-  status           String      // "pending", "processing", "completed", "failed", "cancelled"
-  transactionId    String?    // Payment gateway transaction ID
-  amount           Float
-  currency         String      @default("VND")
-  errorCode        String?     // Payment gateway error code
-  errorMessage     String?    // Payment gateway error message
-  paidAt           DateTime?    // When payment was completed
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  id            Int              @id @default(autoincrement())
+  orderId       Int
+  order         Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderCode     String?          @unique // PayOS orderCode (Date.now() as string)
+  provider      PaymentMethod
+  status        TransactionStatus @default(pending)
+  transactionId String?          // Payment gateway transaction ID
+  amount        Float
+  currency      String           @default("VND")
+  errorCode     String?
+  errorMessage  String?
+  paidAt        DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 
+  @@index([orderId])
   @@index([orderCode])
+  @@index([provider, status])
 }
 
 model Order {
-  id                Int         @id @default(autoincrement())
+  id                Int            @id @default(autoincrement())
   userId            Int
-  user              User        @relation(fields: [userId], references: [id])
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   totalAmount       Float
-  status            String      @default("pending")  // "pending", "processing", "completed", "cancelled"
-  paymentMethod     String      @default("cash")     // "cash", "vnpay", "payos"
-  paymentStatus     String      @default("pending")  // "pending", "processing", "completed", "failed"
-  paymentTransactionId String?  // Reference to PaymentTransaction.id
-  paymentTimestamp  DateTime?    // When payment was completed
+  status            OrderStatus    @default(pending)
+  paymentMethod     PaymentMethod  @default(cash)
+  paymentStatus     PaymentStatus  @default(pending)
+  paymentTimestamp  DateTime?
   paymentTransactions PaymentTransaction[]
-  deliveryAddress   String?     @db.NVarChar(Max)
+  deliveryAddress   String?        @db.NVarChar(Max)
   deliveryTime      DateTime?
+  estimatedReadyTime DateTime?
+  note              String?        @db.NVarChar(Max)
   orderItems        OrderItem[]
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
 }
 
 model OrderItem {
   id              Int     @id @default(autoincrement())
   orderId         Int
-  order           Order   @relation(fields: [orderId], references: [id])
+  order           Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId       Int
-  product         Product @relation(fields: [productId], references: [id])
+  product         Product @relation(fields: [productId], references: [id], onDelete: Restrict)
   quantity        Int
   priceAtPurchase Float
-  options         String?  @db.NVarChar(Max)
+  options         String?  @db.NVarChar(Max) // JSON: { size: "L", sugar: "50%", ice: "normal", toppings: [] }
+
+  @@index([orderId])
+  @@index([productId])
 }

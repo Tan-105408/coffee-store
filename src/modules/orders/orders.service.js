@@ -63,4 +63,18 @@ const sendOrderConfirmation = async (email, orderData) => {
   }
 };
 
-module.exports = { sendOrderConfirmation };
+const { prisma } = require("../../config/db");
+
+const getOrdersByUserId = async (userId) => {
+  return await prisma.order.findMany({
+    where: { userId: parseInt(userId) },
+    include: {
+      orderItems: {
+        include: { product: true },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
+module.exports = { sendOrderConfirmation, getOrdersByUserId };

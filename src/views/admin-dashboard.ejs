@@ -1,369 +1,699 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard | Coffee Store</title>
-  <meta http-equiv="refresh" content="10">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <style>
-    :root {
-      --co-primary: #5c3e35;
-      --co-secondary: #d4a373;
-      --co-success: #2a9d8f;
-      --co-warning: #f4a261;
-      --co-danger: #e76f51;
-      --co-bg: #f8f9fa;
+    :root[data-theme="dark"] {
+      --co-primary: #8B6F5E;
+      --co-primary-dark: #1E1410;
+      --co-primary-light: #A88B7A;
+      --co-bg: #1A1412;
+      --co-bg-card: #2A2220;
+      --co-text: #E8E0DC;
+      --co-text-secondary: #B8AEA8;
+      --co-text-muted: #8C7E74;
+      --co-border: rgba(232,224,220,0.08);
+      --co-border-strong: rgba(232,224,220,0.15);
+      --co-shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+      --co-shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+      --co-shadow-lg: 0 12px 32px rgba(0,0,0,0.5);
     }
-    body { background-color: var(--co-bg); padding-top: 60px; }
-    .sidebar {
-      position: fixed;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      z-index: 100;
-      padding: 48px 0 0;
-      width: 240px;
-      background: var(--co-primary);
-      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+
+    /* ── Admin Layout ── */
+    .admin-wrap { display: flex; min-height: calc(100vh - 72px); padding-top: 72px; }
+    .admin-sidebar {
+      position: fixed; top: 72px; left: 0; bottom: 0; width: 260px;
+      background: var(--co-primary-dark); z-index: 1020;
+      transition: transform 0.3s var(--co-ease);
+      display: flex; flex-direction: column;
     }
-    .navbar-admin {
-      position: fixed;
-      top: 0;
-      right: 0;
-      left: 240px;
-      z-index: 99;
-      background: #fff;
-      border-bottom: 1px solid #dee2e6;
+    .admin-sidebar .nav-link {
+      color: rgba(255,255,255,0.7); padding: 12px 20px; margin: 2px 10px;
+      border-radius: var(--co-radius-sm); transition: all var(--co-transition);
+      font-size: 0.9rem; font-weight: 500;
     }
-    .main-content {
-      margin-left: 240px;
-      padding: 20px;
+    .admin-sidebar .nav-link:hover { color: #fff; background: rgba(255,255,255,0.1); }
+    .admin-sidebar .nav-link.active { color: #fff; background: var(--co-secondary); }
+    .admin-sidebar .nav-link i { width: 22px; text-align: center; margin-right: 10px; }
+    .admin-main {
+      margin-left: 260px; flex: 1; padding: 24px;
+      transition: margin-left 0.3s var(--co-ease);
     }
-    .sidebar .nav-link {
-      color: rgba(255,255,255,0.8);
-      padding: 12px 20px;
-      border-radius: 8px;
-      margin: 4px 8px;
-      transition: all 0.3s;
+    .admin-topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 24px; background: var(--co-bg-card);
+      border-bottom: 1px solid var(--co-border);
+      margin: -24px -24px 24px -24px;
     }
-    .sidebar .nav-link:hover, .sidebar .nav-link.active {
-      background: rgba(255,255,255,0.15);
-      color: #fff;
+    .admin-topbar h4 { margin: 0; font-size: 1.2rem; font-weight: 700; }
+
+    /* Sidebar toggle */
+    .sidebar-toggle {
+      background: none; border: none; font-size: 1.3rem;
+      color: var(--co-text); cursor: pointer; padding: 4px 8px;
+      display: none;
     }
-    .stat-card {
-      border: none;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      transition: transform 0.3s;
+    .sidebar-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      z-index: 1019; display: none;
     }
-    .stat-card:hover { transform: translateY(-5px); }
-    .stat-icon {
-      width: 60px;
-      height: 60px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
+
+    /* Stat cards */
+    .admin-stat-card {
+      background: var(--co-bg-card); border-radius: var(--co-radius);
+      border: 1px solid var(--co-border); padding: 20px;
+      transition: all var(--co-transition);
     }
-    .data-table {
-      border: none;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      border-radius: 12px;
-      overflow: hidden;
+    .admin-stat-card:hover { transform: translateY(-2px); box-shadow: var(--co-shadow-md); }
+    .admin-stat-card .stat-icon {
+      width: 48px; height: 48px; border-radius: var(--co-radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
     }
-    .data-table thead { background: var(--co-primary); color: #fff; }
-    .data-table th, .data-table td { padding: 14px 16px; vertical-align: middle; }
-    .data-table tbody tr { transition: background 0.2s; }
-    .data-table tbody tr:hover { background: #f8f9fa; }
-    .action-btn {
-      padding: 6px 12px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      transition: all 0.2s;
+    .admin-stat-card .stat-value { font-size: 1.6rem; font-weight: 800; line-height: 1.2; }
+    .admin-stat-card .stat-label { font-size: 0.82rem; color: var(--co-text-muted); font-weight: 500; }
+
+    /* Mini bar chart (7 days) */
+    .mini-chart { display: flex; align-items: flex-end; gap: 4px; height: 32px; margin-top: 12px; }
+    .mini-chart .bar {
+      flex: 1; border-radius: 3px 3px 0 0;
+      background: var(--co-secondary); opacity: 0.6;
+      transition: opacity 0.2s; min-height: 4px;
     }
-    .btn-edit { background: #3498db; color: #fff; }
-    .btn-edit:hover { background: #2980b9; }
-    .btn-delete { background: #e74c3c; color: #fff; }
-    .btn-delete:hover { background: #c0392b; }
-    .search-box {
-      border-radius: 10px;
-      border: 2px solid #e9ecef;
-      padding: 10px 16px;
-      transition: border 0.3s;
+    .mini-chart .bar:hover { opacity: 1; }
+    .mini-chart .bar.today { opacity: 1; background: var(--co-accent); }
+
+    /* Data tables */
+    .admin-card {
+      background: var(--co-bg-card); border-radius: var(--co-radius);
+      border: 1px solid var(--co-border);
+      box-shadow: var(--co-shadow-sm);
     }
-    .search-box:focus {
-      border-color: var(--co-secondary);
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(212,163,115,0.2);
+    .admin-card .card-header {
+      background: transparent; border-bottom: 1px solid var(--co-border);
+      padding: 16px 20px;
     }
-    .badge-active { background: var(--co-success); }
-    .badge-inactive { background: var(--co-danger); }
-    .modal-header { background: var(--co-primary); color: #fff; border-radius: 0; }
-    .modal-header .btn-close { filter: invert(1); }
+    .admin-card .card-body { padding: 0; }
+    .admin-table { margin: 0; }
+    .admin-table thead th {
+      background: var(--co-bg); color: var(--co-text-secondary);
+      font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.04em; padding: 12px 16px; border-color: var(--co-border);
+    }
+    .admin-table td {
+      padding: 12px 16px; vertical-align: middle; border-color: var(--co-border);
+      font-size: 0.88rem;
+    }
+    .admin-table tbody tr { transition: background var(--co-transition); }
+    .admin-table tbody tr:hover { background: var(--co-bg); }
+
+    /* Status badges */
+    .badge-status { font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: var(--co-radius-full); }
+    .badge-status.pending { background: rgba(232,168,56,0.15); color: var(--co-warning); }
+    .badge-status.processing { background: rgba(139,111,94,0.15); color: var(--co-primary-light); }
+    .badge-status.completed { background: rgba(61,139,110,0.15); color: var(--co-success); }
+    .badge-status.cancelled { background: rgba(201,68,68,0.15); color: var(--co-danger); }
+
+    /* Status select dropdown styling */
+    .status-select {
+      font-size: 0.8rem; padding: 4px 8px; border-radius: var(--co-radius-full);
+      border: 1px solid var(--co-border); background: var(--co-bg);
+      color: var(--co-text); cursor: pointer;
+    }
+    .status-select option { font-size: 0.8rem; }
+    .status-select option[value="pending"] { color: var(--co-warning); }
+    .status-select option[value="processing"] { color: var(--co-primary-light); }
+    .status-select option[value="completed"] { color: var(--co-success); }
+    .status-select option[value="cancelled"] { color: var(--co-danger); }
+
+    /* Status filter tabs */
+    .filter-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+    .filter-tab {
+      padding: 6px 14px; border-radius: var(--co-radius-full); border: 1px solid var(--co-border);
+      background: transparent; color: var(--co-text-secondary); font-size: 0.8rem;
+      font-weight: 500; cursor: pointer; transition: all var(--co-transition);
+    }
+    .filter-tab:hover { border-color: var(--co-secondary); color: var(--co-secondary); }
+    .filter-tab.active { background: var(--co-secondary); color: #fff; border-color: var(--co-secondary); }
+    .filter-tab .count {
+      display: inline-block; margin-left: 4px; font-size: 0.7rem;
+      background: rgba(0,0,0,0.1); padding: 0 6px; border-radius: 10px;
+    }
+    .filter-tab.active .count { background: rgba(255,255,255,0.2); }
+
+    /* Search */
+    .admin-search {
+      border-radius: var(--co-radius-sm); border: 1px solid var(--co-border);
+      padding: 8px 14px; font-size: 0.85rem; background: var(--co-bg);
+      color: var(--co-text); transition: border var(--co-transition);
+      min-width: 200px;
+    }
+    .admin-search:focus { outline: none; border-color: var(--co-secondary); box-shadow: 0 0 0 3px rgba(200,149,108,0.15); }
+    .admin-search::placeholder { color: var(--co-text-muted); }
+
+    /* Toast */
+    .admin-toast-container {
+      position: fixed; top: 84px; right: 20px; z-index: 9999;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .admin-toast {
+      padding: 12px 20px; border-radius: var(--co-radius-sm);
+      font-size: 0.85rem; font-weight: 500;
+      box-shadow: var(--co-shadow-lg);
+      animation: toastIn 0.3s var(--co-ease);
+      max-width: 360px;
+    }
+    .admin-toast.success { background: var(--co-success); color: #fff; }
+    .admin-toast.error { background: var(--co-danger); color: #fff; }
+    .admin-toast.info { background: var(--co-primary-light); color: #fff; }
+    .admin-toast.warning { background: var(--co-warning); color: var(--co-text); }
+    .admin-toast i { margin-right: 8px; }
+
+    @keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(40px); } }
+
+    /* Section transitions */
+    .admin-section { display: none; animation: fadeIn 0.25s var(--co-ease); }
+    .admin-section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Image hover zoom */
+    .admin-table .product-thumb {
+      width: 44px; height: 44px; object-fit: cover; border-radius: var(--co-radius-sm);
+      transition: transform var(--co-transition);
+    }
+    .admin-table .product-thumb:hover { transform: scale(2.5); z-index: 10; position: relative; }
+
+    /* Dark mode toggle */
+    .dark-toggle {
+      background: none; border: 1px solid var(--co-border); border-radius: var(--co-radius-full);
+      width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--co-text); font-size: 1rem;
+      transition: all var(--co-transition);
+    }
+    .dark-toggle:hover { border-color: var(--co-secondary); color: var(--co-secondary); }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--co-text-muted); }
+    .empty-state i { font-size: 3rem; opacity: 0.4; margin-bottom: 12px; }
+    .empty-state p { font-size: 0.9rem; }
+
+    /* Countdown timer */
+    .countdown { font-size: 0.78rem; color: var(--co-success); font-weight: 500; }
+    .countdown.overdue { color: var(--co-danger); }
+
+    /* Refresh indicator */
+    .refresh-indicator { display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--co-text-muted); }
+    .refresh-indicator .spinner { width: 12px; height: 12px; border: 2px solid var(--co-border); border-top-color: var(--co-secondary); border-radius: 50%; animation: spin 0.6s linear infinite; display: none; }
+    .refresh-indicator.refreshing .spinner { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Responsive */
+    @media (max-width: 991.98px) {
+      .admin-sidebar { transform: translateX(-100%); }
+      .admin-sidebar.open { transform: translateX(0); }
+      .sidebar-overlay.open { display: block; }
+      .sidebar-toggle { display: block; }
+      .admin-main { margin-left: 0; }
+    }
+    @media (max-width: 767.98px) {
+      .admin-topbar { flex-wrap: wrap; gap: 8px; }
+      .admin-topbar .topbar-actions { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+      .admin-search { min-width: 140px; }
+      .filter-tabs { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+      .admin-table { font-size: 0.8rem; }
+      .admin-table td, .admin-table th { padding: 8px 10px; }
+      .admin-stat-card .stat-value { font-size: 1.3rem; }
+    }
   </style>
 </head>
 <body>
-  
-  <nav class="navbar navbar-expand-lg navbar-light navbar-admin px-4">
-    <h4 class="m-0 fw-bold">Admin Dashboard</h4>
-    <div class="ms-auto d-flex align-items-center gap-3">
-      <span class="text-muted small"><i class="bi bi-person-circle me-1"></i> <%= typeof user !== 'undefined' ? user.username : 'Admin' %></span>
-      <a href="/auth/logout" class="btn btn-outline-danger btn-sm"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
-    </div>
-  </nav>
 
-  <div class="sidebar d-md-block collapse" id="sidebarMenu">
-    <div class="text-center mb-4">
-      <h4 class="text-white font-serif"><i class="bi bi-cup-hot"></i> Coffee Admin</h4>
+  <!-- Toast Container -->
+  <div class="admin-toast-container" id="toastContainer"></div>
+
+  <!-- Sidebar Overlay (mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="admin-wrap">
+    <!-- ── Sidebar ── -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="text-center py-4 border-bottom" style="border-color: rgba(255,255,255,0.08) !important;">
+        <h5 class="font-serif text-white mb-0"><i class="bi bi-cup-hot"></i> Coffee Admin</h5>
+      </div>
+      <nav class="nav flex-column pt-3">
+        <a class="nav-link active" href="#" data-section="dashboard-stats"><i class="bi bi-speedometer2"></i>Dashboard</a>
+        <a class="nav-link" href="#" data-section="products"><i class="bi bi-box-seam"></i>Sản phẩm</a>
+        <a class="nav-link" href="#" data-section="users"><i class="bi bi-people"></i>Người dùng</a>
+        <a class="nav-link" href="#" data-section="orders"><i class="bi bi-bag"></i>Đơn hàng</a>
+      </nav>
+      <div class="mt-auto p-3 border-top" style="border-color: rgba(255,255,255,0.08) !important;">
+        <a href="/" class="nav-link d-block"><i class="bi bi-house"></i>Về trang chủ</a>
+      </div>
+    </aside>
+
+    <!-- ── Main Content ── -->
+    <div class="admin-main">
+      <!-- Top Bar -->
+      <div class="admin-topbar">
+        <div class="d-flex align-items-center gap-3">
+          <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+            <i class="bi bi-list"></i>
+          </button>
+          <h4><i class="bi bi-speedometer2 me-2" style="color:var(--co-secondary)"></i>Dashboard</h4>
+        </div>
+        <div class="d-flex align-items-center gap-3 topbar-actions">
+          <!-- Auto-refresh indicator -->
+          <div class="refresh-indicator" id="refreshIndicator">
+            <span class="spinner"></span>
+            <span id="refreshLabel">Tự động</span>
+          </div>
+          <!-- Auto-refresh toggle -->
+          <button class="btn btn-sm border" id="autoRefreshToggle" style="border-color:var(--co-border) !important; color:var(--co-text-secondary);" title="Tự động làm mới">
+            <i class="bi bi-arrow-repeat" id="autoRefreshIcon"></i>
+          </button>
+          <!-- Manual refresh -->
+          <button class="btn btn-sm border" id="manualRefresh" style="border-color:var(--co-border) !important; color:var(--co-text-secondary);" title="Làm mới ngay">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+          <!-- Dark mode -->
+          <button class="dark-toggle" id="darkModeToggle" title="Chế độ tối">
+            <i class="bi bi-moon-stars" id="darkModeIcon"></i>
+          </button>
+          <!-- User -->
+          <span class="text-muted small"><i class="bi bi-person-circle me-1"></i> <%= typeof user !== 'undefined' ? user.username : 'Admin' %></span>
+          <a href="/auth/logout" class="btn btn-sm" style="background:var(--co-danger);color:#fff;border-radius:var(--co-radius-sm);">
+            <i class="bi bi-box-arrow-right"></i> Đăng xuất
+          </a>
+        </div>
+      </div>
+
+      <!-- ═══════ DASHBOARD STATS ═══════ -->
+      <section class="admin-section active" id="section-dashboard-stats">
+        <!-- Stat Cards with Trend Indicators -->
+        <div class="row g-3 mb-4">
+          <div class="col-lg-3 col-md-6">
+            <div class="admin-stat-card">
+              <div class="d-flex align-items-center gap-3 mb-2">
+                <div class="stat-icon" style="background:rgba(200,149,108,0.15);color:var(--co-secondary);"><i class="bi bi-box-seam"></i></div>
+                <div class="flex-grow-1">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="stat-value"><%= products.length %></div>
+                  </div>
+                  <div class="stat-label">Sản phẩm</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-3 col-md-6">
+            <div class="admin-stat-card">
+              <div class="d-flex align-items-center gap-3 mb-2">
+                <div class="stat-icon" style="background:rgba(139,111,94,0.15);color:var(--co-primary-light);"><i class="bi bi-people"></i></div>
+                <div class="flex-grow-1">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="stat-value"><%= users.length %></div>
+                  </div>
+                  <div class="stat-label">Người dùng</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-3 col-md-6">
+            <div class="admin-stat-card">
+              <div class="d-flex align-items-center gap-3 mb-2">
+                <div class="stat-icon" style="background:rgba(61,139,110,0.15);color:var(--co-success);"><i class="bi bi-bag-check"></i></div>
+                <div class="flex-grow-1">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="stat-value"><%= orders.length %></div>
+                    <span class="trend-badge <%= stats.ordersTrend > 0 ? 'up' : stats.ordersTrend < 0 ? 'down' : 'flat' %>">
+                      <i class="bi bi-arrow-<%= stats.ordersTrend > 0 ? 'up' : stats.ordersTrend < 0 ? 'down' : 'right' %>-short"></i>
+                      <%= Math.abs(stats.ordersTrend) %>%
+                    </span>
+                  </div>
+                  <div class="stat-label">Đơn hàng hôm nay: <%= stats.todayOrders %></div>
+                </div>
+              </div>
+              <div class="d-flex gap-2 mt-2" style="font-size:0.72rem;color:var(--co-text-muted);">
+                <span><span style="color:var(--co-warning)"><%= stats.pendingCount %></span> chờ</span>
+                <span>·</span>
+                <span><span style="color:var(--co-primary-light)"><%= stats.processingCount %></span> XL</span>
+                <span>·</span>
+                <span><span style="color:var(--co-success)"><%= stats.completedCount %></span> xong</span>
+                <span>·</span>
+                <span><span style="color:var(--co-danger)"><%= stats.cancelledCount %></span> hủy</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-3 col-md-6">
+            <div class="admin-stat-card">
+              <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:rgba(212,102,60,0.15);color:var(--co-accent);"><i class="bi bi-cash-stack"></i></div>
+                <div class="flex-grow-1">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="stat-value"><%= stats.todayRevenue.toLocaleString('vi-VN') %>đ</div>
+                    <span class="trend-badge <%= stats.revenueTrend > 0 ? 'up' : stats.revenueTrend < 0 ? 'down' : 'flat' %>">
+                      <i class="bi bi-arrow-<%= stats.revenueTrend > 0 ? 'up' : stats.revenueTrend < 0 ? 'down' : 'right' %>-short"></i>
+                      <%= Math.abs(stats.revenueTrend) %>%
+                    </span>
+                  </div>
+                  <div class="stat-label">Doanh thu hôm nay</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Monthly Chart -->
+        <div class="admin-card p-4 mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h6 class="fw-bold mb-0" style="font-size:0.95rem;">
+              <i class="bi bi-graph-up me-2" style="color:var(--co-secondary)"></i>Đơn hàng theo tháng
+            </h6>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm" style="border:1px solid var(--co-border);color:var(--co-text-secondary);border-radius:var(--co-radius-sm);" id="toggleChartType" title="Đổi kiểu biểu đồ">
+                <i class="bi bi-bar-chart me-1"></i> Biểu đồ cột
+              </button>
+              <button class="btn btn-sm" style="border:1px solid var(--co-border);color:var(--co-text-secondary);border-radius:var(--co-radius-sm);" id="exportCSV" title="Xuất CSV">
+                <i class="bi bi-download me-1"></i> Xuất CSV
+              </button>
+            </div>
+          </div>
+          <div class="row align-items-center">
+            <div class="col-lg-8">
+              <div style="height:320px;position:relative;">
+                <canvas id="monthlyChart"></canvas>
+              </div>
+            </div>
+            <div class="col-lg-4">
+              <div class="d-flex flex-column gap-3">
+                <div class="p-3 rounded" style="background:var(--co-bg);border:1px solid var(--co-border);">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span style="font-size:0.8rem;color:var(--co-text-muted);">Tổng đơn hàng</span>
+                    <span class="fw-bold" style="font-size:0.95rem;" id="chartTotalOrders">0</span>
+                  </div>
+                </div>
+                <div class="p-3 rounded" style="background:var(--co-bg);border:1px solid var(--co-border);">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span style="font-size:0.8rem;color:var(--co-text-muted);">Tháng cao nhất</span>
+                    <span class="fw-bold" style="font-size:0.95rem;color:var(--co-success);" id="chartBestMonth">-</span>
+                  </div>
+                </div>
+                <div class="p-3 rounded" style="background:var(--co-bg);border:1px solid var(--co-border);">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span style="font-size:0.8rem;color:var(--co-text-muted);">TB đơn/tháng</span>
+                    <span class="fw-bold" style="font-size:0.95rem;" id="chartAvgOrders">0</span>
+                  </div>
+                </div>
+                <div class="p-3 rounded" style="background:var(--co-bg);border:1px solid var(--co-border);">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span style="font-size:0.8rem;color:var(--co-text-muted);">Tháng thấp nhất</span>
+                    <span class="fw-bold" style="font-size:0.95rem;color:var(--co-danger);" id="chartWorstMonth">-</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════ PRODUCTS ═══════ -->
+      <section class="admin-section" id="section-products">
+        <div class="admin-card">
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-box-seam me-2" style="color:var(--co-secondary)"></i>Quản lý Sản phẩm</h5>
+            <div class="d-flex gap-2">
+              <input type="text" class="admin-search" placeholder="Tìm sản phẩm..." id="productSearch">
+              <button class="btn btn-sm" style="background:var(--co-primary);color:#fff;border-radius:var(--co-radius-sm);" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                <i class="bi bi-plus-lg"></i> Thêm
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table admin-table" id="productsTable">
+                <thead>
+                  <tr><th>SP</th><th>Ảnh</th><th>Tên</th><th>Giá</th><th>DM</th><th>Giảm</th><th>Best</th><th class="text-end">Hành động</th></tr>
+                </thead>
+                <tbody>
+                  <% if (products.length === 0) { %>
+                    <tr><td colspan="8"><div class="empty-state"><i class="bi bi-box-seam"></i><p>Chưa có sản phẩm nào</p></div></td></tr>
+                  <% } else { %>
+                    <% products.forEach(product => { %>
+                      <tr>
+                        <td class="text-muted"><small><%= product.id %></small></td>
+                        <td><img src="<%= product.image %>" alt="<%= product.name %>" class="product-thumb" loading="lazy"></td>
+                        <td class="fw-medium"><%= product.name %></td>
+                        <td class="fw-semibold"><%= product.price.toLocaleString('vi-VN') %>đ</td>
+                        <td><span class="badge-status" style="background:rgba(200,149,108,0.12);color:var(--co-secondary);"><%= product.category %></span></td>
+                        <td><% if (product.discount > 0) { %><span class="badge-status" style="background:rgba(201,68,68,0.12);color:var(--co-danger);">-<%= product.discount %>%</span><% } else { %><span class="text-muted">—</span><% } %></td>
+                        <td><% if (product.isBestSeller) { %><i class="bi bi-star-fill" style="color:var(--co-warning)"></i><% } else { %><span class="text-muted">—</span><% } %></td>
+                        <td class="text-end">
+                          <button class="btn btn-sm" style="background:rgba(61,139,110,0.12);color:var(--co-success);border:none;"
+                                  data-bs-toggle="modal" data-bs-target="#editProductModal"
+                                  data-id="<%= product.id %>"
+                                  data-name="<%= product.name.replace(/"/g, '&quot;') %>"
+                                  data-price="<%= product.price %>"
+                                  data-image="<%= product.image %>"
+                                  data-category="<%= product.category %>"
+                                  data-description="<%= (product.description || '').replace(/"/g, '&quot;') %>"
+                                  data-discount="<%= product.discount || 0 %>"
+                                  data-bestseller="<%= product.isBestSeller ? 'true' : 'false' %>"
+                                  data-promotag="<%= (product.promoTag || '').replace(/"/g, '&quot;') %>"
+                                  title="Sửa"><i class="bi bi-pencil"></i></button>
+                          <button class="btn btn-sm" style="background:rgba(201,68,68,0.12);color:var(--co-danger);border:none;"
+                                  onclick="confirmDeleteProduct(<%= product.id %>, '<%= product.name.replace(/'/g, "\\'") %>')"
+                                  title="Xóa"><i class="bi bi-trash"></i></button>
+                        </td>
+                      </tr>
+                    <% }) %>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════ USERS ═══════ -->
+      <section class="admin-section" id="section-users">
+        <div class="admin-card">
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-people me-2" style="color:var(--co-secondary)"></i>Quản lý Người dùng</h5>
+            <input type="text" class="admin-search" placeholder="Tìm người dùng..." id="userSearch">
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table admin-table" id="usersTable">
+                <thead>
+                  <tr><th>ID</th><th>Tên</th><th>Email</th><th>Vai trò</th><th class="text-end">Hành động</th></tr>
+                </thead>
+                <tbody>
+                  <% if (users.length === 0) { %>
+                    <tr><td colspan="5"><div class="empty-state"><i class="bi bi-people"></i><p>Chưa có người dùng nào</p></div></td></tr>
+                  <% } else { %>
+                    <% users.forEach(user => { %>
+                      <tr>
+                        <td class="text-muted"><small><%= user.id %></small></td>
+                        <td class="fw-medium"><%= user.username %></td>
+                        <td class="text-muted" style="font-size:0.82rem;"><%= user.email %></td>
+                        <td>
+                          <span class="badge-status" style="background:<%= user.role === 'admin' ? 'rgba(212,102,60,0.12)' : 'rgba(139,111,94,0.12)' %>;color:<%= user.role === 'admin' ? 'var(--co-accent)' : 'var(--co-primary-light)' %>;">
+                            <%= user.role === 'admin' ? 'Admin' : 'User' %>
+                          </span>
+                        </td>
+                        <td class="text-end">
+                          <button class="btn btn-sm" style="background:rgba(201,68,68,0.12);color:var(--co-danger);border:none;"
+                                  onclick="confirmDeleteUser(<%= user.id %>, '<%= user.username.replace(/'/g, "\\'") %>')"
+                                  title="Xóa"><i class="bi bi-trash"></i></button>
+                        </td>
+                      </tr>
+                    <% }) %>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════ ORDERS ═══════ -->
+      <section class="admin-section" id="section-orders">
+        <div class="admin-card">
+          <div class="card-header d-flex flex-column gap-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <h5 class="mb-0 fw-bold"><i class="bi bi-bag me-2" style="color:var(--co-secondary)"></i>Quản lý Đơn hàng</h5>
+              <input type="text" class="admin-search" placeholder="Tìm đơn hàng..." id="orderSearch">
+            </div>
+            <!-- Status filter tabs -->
+            <div class="filter-tabs" id="orderFilters">
+              <button class="filter-tab active" data-filter="all">Tất cả <span class="count"><%= orders.length %></span></button>
+              <button class="filter-tab" data-filter="pending">⏳ Chờ <span class="count"><%= stats.pendingCount %></span></button>
+              <button class="filter-tab" data-filter="processing">🔧 XL <span class="count"><%= stats.processingCount %></span></button>
+              <button class="filter-tab" data-filter="completed">✅ Xong <span class="count"><%= stats.completedCount %></span></button>
+              <button class="filter-tab" data-filter="cancelled">❌ Hủy <span class="count"><%= stats.cancelledCount %></span></button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table admin-table" id="ordersTable">
+                <thead>
+                  <tr>
+                    <th>Mã đơn</th><th>Khách hàng</th><th>Tổng</th><th>Trạng thái</th>
+                    <th>Thanh toán</th><th>Thời gian</th><th class="text-end">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% if (orders.length === 0) { %>
+                    <tr><td colspan="7"><div class="empty-state"><i class="bi bi-bag"></i><p>Chưa có đơn hàng nào</p></div></td></tr>
+                  <% } else { %>
+                    <% orders.forEach(order => { %>
+                      <tr class="order-row" data-status="<%= order.status %>">
+                        <td class="fw-semibold">#<%= order.id %></td>
+                        <td>
+                          <div><%= order.user ? order.user.username : 'Ẩn danh' %></div>
+                          <% if (order.user && order.user.email) { %>
+                            <small class="text-muted"><%= order.user.email %></small>
+                          <% } %>
+                        </td>
+                        <td class="fw-semibold"><%= order.totalAmount ? order.totalAmount.toLocaleString('vi-VN') + 'đ' : '0đ' %></td>
+                        <td>
+                          <div class="d-flex flex-column gap-1">
+                            <select class="status-select" id="status-<%= order.id %>" onchange="updateOrderStatus(<%= order.id %>, this.value)">
+                              <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>⏳ Chờ</option>
+                              <option value="processing" <%= order.status === 'processing' ? 'selected' : '' %>>🔧 XL</option>
+                              <option value="completed" <%= order.status === 'completed' ? 'selected' : '' %>>✅ Xong</option>
+                              <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>❌ Hủy</option>
+                            </select>
+                            <% if (order.estimatedReadyTime) { %>
+                              <div class="countdown" data-time="<%= new Date(order.estimatedReadyTime).toISOString() %>">
+                                <i class="bi bi-clock me-1"></i><span class="countdown-value"></span>
+                              </div>
+                            <% } %>
+                          </div>
+                        </td>
+                        <td>
+                          <%
+                            const payLabel = order.paymentMethod === 'payos' ? 'PayOS' : order.paymentMethod === 'vnpay' ? 'VNPay' : 'COD';
+                            const payStatus = order.paymentStatus || 'pending';
+                            const payColor = payStatus === 'completed' ? 'var(--co-success)' : payStatus === 'failed' ? 'var(--co-danger)' : 'var(--co-warning)';
+                          %>
+                          <div class="d-flex flex-column gap-1">
+                            <span class="badge-status" style="background:rgba(61,139,110,0.12);color:var(--co-success);font-size:0.7rem;"><%= payLabel %></span>
+                            <span style="font-size:0.72rem;color:<%= payColor %>;">
+                              <i class="bi <%= payStatus === 'completed' ? 'bi-check-circle-fill' : payStatus === 'failed' ? 'bi-x-circle-fill' : 'bi-clock-fill' %> me-1"></i>
+                              <%= payStatus === 'completed' ? 'Đã thanh toán' : payStatus === 'failed' ? 'Thất bại' : 'Chưa TT' %>
+                            </span>
+                          </div>
+                        </td>
+                        <td>
+                          <div style="font-size:0.82rem;"><%= new Date(order.createdAt).toLocaleString('vi-VN') %></div>
+                          <% if (order.note) { %>
+                            <div><small style="color:var(--co-warning);font-size:0.72rem;" title="<%= order.note %>"><i class="bi bi-info-circle me-1"></i>Ghi chú</small></div>
+                          <% } %>
+                        </td>
+                        <td class="text-end">
+                          <div class="d-flex gap-1 justify-content-end">
+                            <button class="btn btn-sm" style="background:rgba(139,111,94,0.12);color:var(--co-primary-light);border:none;"
+                                    data-bs-toggle="modal" data-bs-target="#orderDetailModal"
+                                    data-id="<%= order.id %>"
+                                    data-user="<%= order.user ? order.user.username : 'Ẩn danh' %>"
+                                    data-total="<%= order.totalAmount || 0 %>"
+                                    data-status="<%= order.status %>"
+                                    data-created="<%= order.createdAt %>"
+                                    data-note="<%= (order.note || '').replace(/"/g, '&quot;') %>"
+                                    data-estimated="<%= order.estimatedReadyTime || '' %>"
+                                    data-items='<%= JSON.stringify(order.orderItems.map(i => ({name: i.product ? i.product.name : "N/A", qty: i.quantity, price: i.priceAtPurchase}))) %>'
+                                    title="Chi tiết"><i class="bi bi-eye"></i></button>
+                            <button class="btn btn-sm" style="background:rgba(232,168,56,0.12);color:var(--co-warning);border:none;"
+                                    data-bs-toggle="modal" data-bs-target="#noteModal"
+                                    data-id="<%= order.id %>"
+                                    data-note="<%= (order.note || '').replace(/"/g, '&quot;') %>"
+                                    data-estimated="<%= order.estimatedReadyTime || '' %>"
+                                    title="Ghi chú"><i class="bi bi-sticky"></i></button>
+                            <button class="btn btn-sm" style="background:rgba(201,68,68,0.12);color:var(--co-danger);border:none;"
+                                    onclick="confirmDeleteOrder(<%= order.id %>)"
+                                    title="Xóa"><i class="bi bi-trash"></i></button>
+                          </div>
+                        </td>
+                      </tr>
+                    <% }) %>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
-    <ul class="nav flex-column">
-      <li class="nav-item"><a class="nav-link active" href="/admin"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
-      <li class="nav-item"><a class="nav-link" href="#products"><i class="bi bi-box-seam me-2"></i>Sản phẩm</a></li>
-      <li class="nav-item"><a class="nav-link" href="#users"><i class="bi bi-people me-2"></i>Người dùng</a></li>
-      <li class="nav-item"><a class="nav-link" href="#orders"><i class="bi bi-bag me-2"></i>Đơn hàng</a></li>
-      <li class="nav-item mt-3"><a class="nav-link" href="/"><i class="bi bi-house me-2"></i>Về trang chủ</a></li>
-    </ul>
   </div>
 
-  <main class="main-content">
+  <!-- ═══════ MODALS ═══════ -->
 
-        <!-- Stats Section -->
-        <div id="dashboard-stats">
-          <div class="d-flex justify-content-between align-items-center py-4 mb-4">
-            <h2 class="fw-bold"><i class="bi bi-speedometer2 me-2"></i>Dashboard</h2>
+  <!-- Order Detail Modal -->
+  <div class="modal fade" id="orderDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header" style="background:var(--co-primary-dark);color:#fff;border-radius:var(--co-radius) var(--co-radius) 0 0;">
+          <h5 class="modal-title" style="font-size:1rem;"><i class="bi bi-bag-check me-2"></i>Chi tiết đơn hàng #<span id="detailOrderId"></span></h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h6 class="fw-bold mb-3" style="font-size:0.82rem;color:var(--co-text-muted);text-transform:uppercase;letter-spacing:0.04em;">Khách hàng</h6>
+              <p class="mb-1"><strong id="detailUser"></strong></p>
+              <p style="font-size:0.85rem;color:var(--co-text-muted);">Đặt lúc: <span id="detailCreated"></span></p>
+            </div>
+            <div class="col-md-6">
+              <h6 class="fw-bold mb-3" style="font-size:0.82rem;color:var(--co-text-muted);text-transform:uppercase;letter-spacing:0.04em;">Thanh toán</h6>
+              <p class="mb-1">Tổng: <strong id="detailTotal" style="color:var(--co-success);font-size:1.1rem;"></strong></p>
+              <p class="mb-0">Trạng thái: <span id="detailStatus" class="badge-status"></span></p>
+            </div>
           </div>
-          <div class="row g-4 mb-4">
-            <div class="col-md-3">
-              <div class="card stat-card p-3">
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <p class="text-muted mb-1">Tổng sản phẩm</p>
-                    <h3 class="mb-0"><%= products.length %></h3>
-                  </div>
-                  <div class="stat-icon" style="background: rgba(92,62,53,0.1); color: var(--co-primary);">
-                    <i class="bi bi-box-seam"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="card stat-card p-3">
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <p class="text-muted mb-1">Tổng người dùng</p>
-                    <h3 class="mb-0"><%= users.length %></h3>
-                  </div>
-                  <div class="stat-icon" style="background: rgba(212,163,115,0.2); color: var(--co-secondary);">
-                    <i class="bi bi-people"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="card stat-card p-3">
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <p class="text-muted mb-1">Tổng đơn hàng</p>
-                    <h3 class="mb-0"><%= orders.length %></h3>
-                  </div>
-                  <div class="stat-icon" style="background: rgba(42,157,143,0.15); color: var(--co-success);">
-                    <i class="bi bi-bag-check"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <h6 class="fw-bold mb-3" style="font-size:0.82rem;color:var(--co-text-muted);text-transform:uppercase;letter-spacing:0.04em;">Sản phẩm</h6>
+          <div id="detailItems" class="mb-4"></div>
+          <div id="detailNoteSection" class="d-none">
+            <h6 class="fw-bold mb-3" style="font-size:0.82rem;color:var(--co-text-muted);text-transform:uppercase;letter-spacing:0.04em;">Ghi chú từ quán</h6>
+            <div id="detailNote" class="p-3 rounded" style="background:rgba(232,168,56,0.1);border:1px solid rgba(232,168,56,0.3);font-size:0.88rem;"></div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
 
-        <!-- Products Section -->
-        <div class="card data-table mb-4" id="products" style="display:none;">
-          <div class="card-header bg-white py-3 border-0">
-            <div class="d-flex justify-content-between align-items-center">
-              <h5 class="mb-0 fw-bold"><i class="bi bi-box-seam me-2"></i>Quản lý Sản phẩm</h5>
-              <div class="d-flex gap-2">
-                <input type="text" class="form-control search-box" placeholder="Tìm sản phẩm..." id="productSearch" style="width: 250px;">
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                  <i class="bi bi-plus-lg"></i> Thêm mới
-                </button>
-              </div>
-            </div>
+  <!-- Note Modal -->
+  <div class="modal fade" id="noteModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header" style="background:var(--co-warning);color:var(--co-text);border-radius:var(--co-radius) var(--co-radius) 0 0;">
+          <h5 class="modal-title" style="font-size:1rem;"><i class="bi bi-sticky me-2"></i>Ghi chú & Thời gian</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <input type="hidden" id="noteOrderId">
+          <div class="mb-4">
+            <label class="form-label fw-semibold" style="font-size:0.88rem;">Ghi chú đơn hàng</label>
+            <textarea id="noteText" class="form-control" rows="3" placeholder="Ví dụ: Hết nguyên liệu, cần liên hệ khách hàng..." style="border-radius:var(--co-radius-sm);border-color:var(--co-border);font-size:0.88rem;"></textarea>
+            <small class="text-muted">Ghi chú sẽ hiển thị cho khách hàng khi xem đơn hàng.</small>
           </div>
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-hover mb-0 align-middle" id="productsTable">
-                <thead class="table-light">
-                  <tr>
-                    <th class="ps-4">ID</th>
-                    <th>Hình ảnh</th>
-                    <th>Tên sản phẩm</th>
-                    <th>Giá</th>
-                    <th>Danh mục</th>
-                    <th>Giảm giá</th>
-                    <th class="text-end pe-4">Hành động</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% products.forEach(product => { %>
-                    <tr>
-                      <td class="ps-4 text-muted"><small><%= product.id %></small></td>
-                      <td>
-                        <img src="<%= product.image %>" alt="<%= product.name %>"
-                             class="rounded shadow-sm" style="width: 50px; height: 50px; object-fit: cover;">
-                      </td>
-                      <td class="fw-bold"><%= product.name %></td>
-                      <td><%= product.price.toLocaleString('vi-VN') %>đ</td>
-                      <td><span class="badge bg-light text-dark border"><%= product.category %></span></td>
-                      <td>
-                        <% if(product.discount > 0) { %>
-                          <span class="badge bg-danger"><%= product.discount %>%</span>
-                        <% } else { %>
-                          <span class="text-muted">-</span>
-                        <% } %>
-                      </td>
-                      <td class="text-end pe-4">
-                        <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal"
-                                data-bs-target="#editProductModal"
-                                data-id="<%= product.id %>"
-                                data-name="<%= product.name %>"
-                                data-price="<%= product.price %>"
-                                data-image="<%= product.image %>"
-                                data-category="<%= product.category %>"
-                                data-description="<%= product.description || '' %>">
-                          <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
-                                data-bs-target="#deleteProductModal"
-                                data-id="<%= product.id %>"
-                                data-name="<%= product.name %>">
-                          <i class="bi bi-trash"></i>
-                        </button>
-                      </td>
-                    </tr>
-                  <% }) %>
-                </tbody>
-              </table>
-            </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold" style="font-size:0.88rem;">Thời gian sẵn sàng dự kiến</label>
+            <input type="datetime-local" id="noteEstimatedTime" class="form-control" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+            <small class="text-muted">Dự kiến khi nào đơn hàng sẽ hoàn thành.</small>
           </div>
         </div>
-
-        <!-- Users Section -->
-        <div class="card data-table mb-4" id="users" style="display:none;">
-          <div class="card-header bg-white py-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <h5 class="mb-0 fw-bold"><i class="bi bi-people me-2"></i>Quản lý Người dùng</h5>
-              <input type="text" class="form-control search-box" placeholder="Tìm người dùng..." id="userSearch" style="width: 250px;">
-            </div>
-          </div>
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-hover mb-0" id="usersTable">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Tên</th>
-                    <th>Email</th>
-                    <th>Vai trò</th>
-                    <th>Hành động</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% users.forEach(user => { %>
-                    <tr>
-                      <td><%= user.id %></td>
-                      <td><%= user.username %></td>
-                      <td><%= user.email %></td>
-                      <td><span class="badge bg-secondary"><%= user.role %></span></td>
-                      <td>
-                        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
-                                data-bs-target="#deleteUserModal"
-                                data-id="<%= user.id %>"
-                                data-name="<%= user.username %>">
-                          <i class="bi bi-trash"></i>
-                        </button>
-                      </td>
-                    </tr>
-                  <% }) %>
-                </tbody>
-              </table>
-            </div>
-          </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius:var(--co-radius-sm);">Hủy</button>
+          <button type="button" class="btn" style="background:var(--co-warning);color:var(--co-text);border-radius:var(--co-radius-sm);" onclick="saveNote()"><i class="bi bi-check-lg me-1"></i>Lưu ghi chú</button>
         </div>
-
-        <!-- Orders Section -->
-        <div class="card data-table mb-4" id="orders" style="display:none;">
-          <div class="card-header bg-white py-3">
-            <h5 class="mb-0 fw-bold"><i class="bi bi-bag me-2"></i>Quản lý Đơn hàng</h5>
-          </div>
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-hover mb-0">
-                <thead>
-                  <tr>
-                    <th>Mã đơn</th>
-                    <th>Khách hàng</th>
-                    <th>Tổng cộng</th>
-                    <th>Trạng thái</th>
-                    <th>Ngày đặt</th>
-                    <th>Hành động</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% orders.forEach(order => { %>
-                    <tr>
-                      <td class="fw-bold">#<%= order.id %></td>
-                      <td><%= order.user ? order.user.username : 'Ẩn danh' %></td>
-                      <td><%= order.totalAmount ? order.totalAmount.toLocaleString('vi-VN') + 'đ' : '0đ' %></td>
-                      <td>
-                        <form action="/admin/orders/update-status/<%= order.id %>" method="POST" class="d-flex gap-2">
-                          <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
-                            <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Đang chờ</option>
-                            <option value="processing" <%= order.status === 'processing' ? 'selected' : '' %>>Đang xử lý</option>
-                            <option value="completed" <%= order.status === 'completed' ? 'selected' : '' %>>Hoàn thành</option>
-                            <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>Đã hủy</option>
-                          </select>
-                        </form>
-                      </td>
-                      <td><%= new Date(order.createdAt).toLocaleString('vi-VN') %></td>
-                      <td>
-                        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
-                                data-bs-target="#deleteOrderModal"
-                                data-id="<%= order.id %>">
-                          <i class="bi bi-trash"></i>
-                        </button>
-                      </td>
-                    </tr>
-                  <% }) %>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Delete Order Modal -->
-        <div class="modal fade" id="deleteOrderModal" tabindex="-1">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Xác nhận xóa</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-              </div>
-              <div class="modal-body">
-                <p>Bạn có chắc chắn muốn xóa đơn hàng #<span id="deleteOrderIdText"></span>?</p>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                <form action="" method="POST" id="deleteOrderForm">
-                  <button type="submit" class="btn btn-danger">Xóa</button>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
+      </div>
     </div>
   </div>
 
@@ -371,41 +701,60 @@
   <div class="modal fade" id="addProductModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Thêm sản phẩm mới</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-header" style="background:var(--co-primary-dark);color:#fff;border-radius:var(--co-radius) var(--co-radius) 0 0;">
+          <h5 class="modal-title" style="font-size:1rem;"><i class="bi bi-plus-circle me-2"></i>Thêm sản phẩm</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <form action="/admin/products/add" method="POST">
           <div class="modal-body">
             <div class="mb-3">
-              <label class="form-label">Tên sản phẩm</label>
-              <input type="text" name="name" class="form-control" required>
+              <label class="form-label" style="font-size:0.85rem;">Tên sản phẩm</label>
+              <input type="text" name="name" class="form-control" required style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+            </div>
+            <div class="row mb-3">
+              <div class="col">
+                <label class="form-label" style="font-size:0.85rem;">Giá (VNĐ)</label>
+                <input type="number" name="price" class="form-control" required style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+              </div>
+              <div class="col">
+                <label class="form-label" style="font-size:0.85rem;">Giảm giá (%)</label>
+                <input type="number" name="discount" class="form-control" value="0" min="0" max="100" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+              </div>
             </div>
             <div class="mb-3">
-              <label class="form-label">Giá (VNĐ)</label>
-              <input type="number" name="price" class="form-control" required>
+              <label class="form-label" style="font-size:0.85rem;">URL Ảnh</label>
+              <input type="text" name="image" class="form-control" placeholder="/images/..." required style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
             </div>
             <div class="mb-3">
-              <label class="form-label">URL Ảnh</label>
-              <input type="text" name="image" class="form-control" placeholder="/images/..." required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Danh mục</label>
-              <select name="category" class="form-select">
-                <option value="coffee">Coffee</option>
-                <option value="tea">Tea</option>
-                <option value="juice">Juice</option>
-                <option value="bakery">Bakery</option>
+              <label class="form-label" style="font-size:0.85rem;">Danh mục</label>
+              <select name="category" class="form-select" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+                <option value="Cà phê">Cà phê</option>
+                <option value="Trà trái cây">Trà trái cây</option>
+                <option value="Trà sữa">Trà sữa</option>
+                <option value="Sinh tố">Sinh tố</option>
+                <option value="Nước ép">Nước ép</option>
+                <option value="Bánh ngọt">Bánh ngọt</option>
               </select>
             </div>
             <div class="mb-3">
-              <label class="form-label">Mô tả</label>
-              <textarea name="description" class="form-control" rows="3"></textarea>
+              <label class="form-label" style="font-size:0.85rem;">Mô tả</label>
+              <textarea name="description" class="form-control" rows="3" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);"></textarea>
+            </div>
+            <div class="form-check form-switch mb-2">
+              <input class="form-check-input" type="checkbox" name="isBestSeller" value="true" id="addBestSeller">
+              <label class="form-check-label fw-semibold" for="addBestSeller" style="font-size:0.85rem;"><i class="bi bi-star-fill text-warning me-1"></i>Best Seller</label>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" style="font-size:0.85rem;">Promo Tag</label>
+              <select name="promoTag" class="form-select" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+                <option value="">Không có</option>
+                <option value="coffee-for-life">☕ Coffee for Life</option>
+              </select>
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-            <button type="submit" class="btn btn-success">Thêm mới</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius:var(--co-radius-sm);">Hủy</button>
+            <button type="submit" class="btn" style="background:var(--co-success);color:#fff;border-radius:var(--co-radius-sm);">Thêm mới</button>
           </div>
         </form>
       </div>
@@ -416,203 +765,628 @@
   <div class="modal fade" id="editProductModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Cập nhật sản phẩm</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-header" style="background:var(--co-primary-dark);color:#fff;border-radius:var(--co-radius) var(--co-radius) 0 0;">
+          <h5 class="modal-title" style="font-size:1rem;"><i class="bi bi-pencil-square me-2"></i>Cập nhật sản phẩm</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <form action="" method="POST" id="editProductForm">
           <div class="modal-body">
             <input type="hidden" name="id" id="editId">
             <div class="mb-3">
-              <label class="form-label">Tên sản phẩm</label>
-              <input type="text" name="name" id="editName" class="form-control" required>
+              <label class="form-label" style="font-size:0.85rem;">Tên sản phẩm</label>
+              <input type="text" name="name" id="editName" class="form-control" required style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+            </div>
+            <div class="row mb-3">
+              <div class="col">
+                <label class="form-label" style="font-size:0.85rem;">Giá (VNĐ)</label>
+                <input type="number" name="price" id="editPrice" class="form-control" required style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+              </div>
+              <div class="col">
+                <label class="form-label" style="font-size:0.85rem;">Giảm giá (%)</label>
+                <input type="number" name="discount" id="editDiscount" class="form-control" min="0" max="100" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+              </div>
             </div>
             <div class="mb-3">
-              <label class="form-label">Giá (VNĐ)</label>
-              <input type="number" name="price" id="editPrice" class="form-control" required>
+              <label class="form-label" style="font-size:0.85rem;">URL Ảnh</label>
+              <input type="text" name="image" id="editImage" class="form-control" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
             </div>
             <div class="mb-3">
-              <label class="form-label">URL Ảnh</label>
-              <input type="text" name="image" id="editImage" class="form-control">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Danh mục</label>
-              <select name="category" id="editCategory" class="form-select">
-                <option value="coffee">Coffee</option>
-                <option value="tea">Tea</option>
-                <option value="juice">Juice</option>
-                <option value="bakery">Bakery</option>
+              <label class="form-label" style="font-size:0.85rem;">Danh mục</label>
+              <select name="category" id="editCategory" class="form-select" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+                <option value="Cà phê">Cà phê</option>
+                <option value="Trà trái cây">Trà trái cây</option>
+                <option value="Trà sữa">Trà sữa</option>
+                <option value="Sinh tố">Sinh tố</option>
+                <option value="Nước ép">Nước ép</option>
+                <option value="Bánh ngọt">Bánh ngọt</option>
               </select>
             </div>
             <div class="mb-3">
-              <label class="form-label">Mô tả</label>
-              <textarea name="description" id="editDescription" class="form-control" rows="3"></textarea>
+              <label class="form-label" style="font-size:0.85rem;">Mô tả</label>
+              <textarea name="description" id="editDescription" class="form-control" rows="3" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);"></textarea>
+            </div>
+            <div class="form-check form-switch mb-2">
+              <input class="form-check-input" type="checkbox" name="isBestSeller" value="true" id="editBestSeller">
+              <label class="form-check-label fw-semibold" for="editBestSeller" style="font-size:0.85rem;"><i class="bi bi-star-fill text-warning me-1"></i>Best Seller</label>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" style="font-size:0.85rem;">Promo Tag</label>
+              <select name="promoTag" id="editPromoTag" class="form-select" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+                <option value="">Không có</option>
+                <option value="coffee-for-life">☕ Coffee for Life</option>
+              </select>
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius:var(--co-radius-sm);">Hủy</button>
+            <button type="submit" class="btn" style="background:var(--co-primary);color:#fff;border-radius:var(--co-radius-sm);">Lưu thay đổi</button>
           </div>
         </form>
       </div>
     </div>
   </div>
 
-  <!-- Delete Product Modal -->
-  <div class="modal fade" id="deleteProductModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header bg-danger text-white">
-          <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Xác nhận xóa</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <p>Bạn có chắc chắn muốn xóa sản phẩm <strong id="deleteProductName"></strong>?</p>
-          <p class="text-muted">Hành động này không thể hoàn tác.</p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-          <form action="" method="POST" id="deleteProductForm">
-            <button type="submit" class="btn btn-danger">Xóa</button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Delete User Modal -->
-  <div class="modal fade" id="deleteUserModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header bg-danger text-white">
-          <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Xác nhận xóa</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <p>Bạn có chắc chắn muốn xóa người dùng <strong id="deleteUserName"></strong>?</p>
-          <p class="text-muted">Hành động này không thể hoàn tác.</p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-          <form action="" method="POST" id="deleteUserForm">
-            <button type="submit" class="btn btn-danger">Xóa</button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
+  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Product Search
-    const productSearch = document.getElementById('productSearch');
-    if (productSearch) {
-      productSearch.addEventListener('input', function() {
-        const query = this.value.toLowerCase();
-        document.querySelectorAll('#productsTable tbody tr').forEach(row => {
-          const name = row.cells[2].textContent.toLowerCase();
-          row.style.display = name.includes(query) ? '' : 'none';
-        });
-      });
+    // ── TOAST SYSTEM ──
+    function showToast(message, type) {
+      type = type || 'success';
+      const container = document.getElementById('toastContainer');
+      const icons = { success: 'bi-check-circle-fill', error: 'bi-x-circle-fill', warning: 'bi-exclamation-circle-fill', info: 'bi-info-circle-fill' };
+      const toast = document.createElement('div');
+      toast.className = 'admin-toast ' + type;
+      toast.innerHTML = '<i class="bi ' + (icons[type] || icons.info) + '"></i>' + message;
+      container.appendChild(toast);
+      setTimeout(() => { toast.style.animation = 'toastOut 0.3s var(--co-ease)'; setTimeout(() => toast.remove(), 300); }, 3000);
     }
 
-    // User Search
-    const userSearch = document.getElementById('userSearch');
-    if (userSearch) {
-      userSearch.addEventListener('input', function() {
-        const query = this.value.toLowerCase();
-        document.querySelectorAll('#usersTable tbody tr').forEach(row => {
-          const name = row.cells[1].textContent.toLowerCase();
-          const email = row.cells[2].textContent.toLowerCase();
-          row.style.display = (name.includes(query) || email.includes(query)) ? '' : 'none';
-        });
-      });
-    }
+    // ── SIDEBAR TOGGLE (mobile) ──
+    const sidebar = document.getElementById('adminSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    document.getElementById('sidebarToggle').addEventListener('click', function() {
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('open');
+    });
+    overlay.addEventListener('click', function() {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('open');
+    });
 
-    // Edit Product Modal
-    const editProductModal = document.getElementById('editProductModal');
-    if (editProductModal) {
-      editProductModal.addEventListener('show.bs.modal', function(event) {
-        const button = event.relatedTarget;
-        const form = document.getElementById('editProductForm');
-        form.action = '/admin/products/update/' + button.dataset.id;
-        document.getElementById('editId').value = button.dataset.id;
-        document.getElementById('editName').value = button.dataset.name;
-        document.getElementById('editPrice').value = button.dataset.price;
-        document.getElementById('editImage').value = button.dataset.image;
-        document.getElementById('editCategory').value = button.dataset.category;
-        document.getElementById('editDescription').value = button.dataset.description;
-      });
-    }
-
-    // Delete Product Modal
-    const deleteProductModal = document.getElementById('deleteProductModal');
-    if (deleteProductModal) {
-      deleteProductModal.addEventListener('show.bs.modal', function(event) {
-        const button = event.relatedTarget;
-        document.getElementById('deleteProductName').textContent = button.dataset.name;
-        document.getElementById('deleteProductForm').action = '/admin/products/delete/' + button.dataset.id;
-      });
-    }
-
-    // Delete User Modal
-    const deleteUserModal = document.getElementById('deleteUserModal');
-    if (deleteUserModal) {
-      deleteUserModal.addEventListener('show.bs.modal', function(event) {
-        const button = event.relatedTarget;
-        document.getElementById('deleteUserName').textContent = button.dataset.name;
-        document.getElementById('deleteUserForm').action = '/admin/users/delete/' + button.dataset.id;
-      });
-    }
-
-    // Delete Order Modal
-    const deleteOrderModal = document.getElementById('deleteOrderModal');
-    if (deleteOrderModal) {
-      deleteOrderModal.addEventListener('show.bs.modal', function(event) {
-        const button = event.relatedTarget;
-        document.getElementById('deleteOrderIdText').textContent = button.dataset.id;
-        document.getElementById('deleteOrderForm').action = '/admin/orders/delete/' + button.dataset.id;
-      });
-    }
-
-    // Section Switching Logic
-    const sections = ['dashboard-stats', 'products', 'users', 'orders'];
-    const navLinks = document.querySelectorAll('.sidebar .nav-link');
+    // ── SECTION SWITCHING ──
+    const sections = document.querySelectorAll('.admin-section');
+    const navLinks = document.querySelectorAll('.admin-sidebar .nav-link[data-section]');
+    const topbarTitle = document.querySelector('.admin-topbar h4 i');
+    const topbarTitleText = document.querySelector('.admin-topbar h4');
 
     function showSection(sectionId) {
-      // Hide all sections
-      sections.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
+      sections.forEach(s => s.classList.remove('active'));
+      const target = document.getElementById('section-' + sectionId);
+      if (target) target.classList.add('active');
+      navLinks.forEach(l => {
+        l.classList.toggle('active', l.dataset.section === sectionId);
       });
+      // Update topbar title
+      const labels = { 'dashboard-stats': 'Dashboard', 'products': 'Sản phẩm', 'users': 'Người dùng', 'orders': 'Đơn hàng' };
+      const icons = { 'dashboard-stats': 'bi-speedometer2', 'products': 'bi-box-seam', 'users': 'bi-people', 'orders': 'bi-bag' };
+      topbarTitle.className = 'bi ' + (icons[sectionId] || 'bi-speedometer2') + ' me-2';
+      topbarTitleText.childNodes[1].textContent = labels[sectionId] || 'Dashboard';
+      // Close sidebar on mobile
+      sidebar.classList.remove('open');
+      overlay.classList.remove('open');
+    }
 
-      // Show target section
-      const target = document.getElementById(sectionId);
-      if (target) target.style.display = 'block';
+    navLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        showSection(link.dataset.section);
+        // Update URL hash
+        history.pushState(null, '', link.dataset.section === 'dashboard-stats' ? '/admin' : '/admin#' + link.dataset.section);
+      });
+    });
 
-      // Update active nav link
-      navLinks.forEach(link => {
-        link.classList.remove('active');
-        if (link.getAttribute('href') === '#' + sectionId || (sectionId === 'dashboard-stats' && link.getAttribute('href') === '/admin')) {
-          link.classList.add('active');
+    // Restore section from URL hash
+    if (window.location.hash) {
+      const hashSection = window.location.hash.substring(1);
+      if (document.getElementById('section-' + hashSection)) {
+        showSection(hashSection);
+      }
+    }
+
+    // Handle browser back/forward
+    window.addEventListener('popstate', () => {
+      const hash = window.location.hash.substring(1);
+      if (hash && document.getElementById('section-' + hash)) showSection(hash);
+      else showSection('dashboard-stats');
+    });
+
+    // ── PRODUCT SEARCH ──
+    document.getElementById('productSearch')?.addEventListener('input', function() {
+      const q = this.value.toLowerCase();
+      document.querySelectorAll('#productsTable tbody tr').forEach(row => {
+        const name = row.cells[2]?.textContent.toLowerCase() || '';
+        row.style.display = name.includes(q) ? '' : 'none';
+      });
+    });
+
+    // ── USER SEARCH ──
+    document.getElementById('userSearch')?.addEventListener('input', function() {
+      const q = this.value.toLowerCase();
+      document.querySelectorAll('#usersTable tbody tr').forEach(row => {
+        const name = row.cells[1]?.textContent.toLowerCase() || '';
+        const email = row.cells[2]?.textContent.toLowerCase() || '';
+        row.style.display = (name.includes(q) || email.includes(q)) ? '' : 'none';
+      });
+    });
+
+    // ── ORDER SEARCH ──
+    document.getElementById('orderSearch')?.addEventListener('input', function() {
+      const q = this.value.toLowerCase();
+      document.querySelectorAll('#ordersTable tbody .order-row').forEach(row => {
+        const id = row.cells[0]?.textContent.toLowerCase() || '';
+        const user = row.cells[1]?.textContent.toLowerCase() || '';
+        row.style.display = (id.includes(q) || user.includes(q)) ? '' : 'none';
+        // Re-apply filter if active
+        applyOrderFilter(activeFilter);
+      });
+    });
+
+    // ── ORDER FILTER TABS ──
+    let activeFilter = 'all';
+    document.querySelectorAll('#orderFilters .filter-tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('#orderFilters .filter-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        activeFilter = this.dataset.filter;
+        applyOrderFilter(activeFilter);
+      });
+    });
+
+    function applyOrderFilter(filter) {
+      const searchQuery = (document.getElementById('orderSearch')?.value || '').toLowerCase();
+      document.querySelectorAll('#ordersTable tbody .order-row').forEach(row => {
+        const status = row.dataset.status;
+        const matchesStatus = filter === 'all' || status === filter;
+        const id = row.cells[0]?.textContent.toLowerCase() || '';
+        const user = row.cells[1]?.textContent.toLowerCase() || '';
+        const matchesSearch = !searchQuery || id.includes(searchQuery) || user.includes(searchQuery);
+        row.style.display = (matchesStatus && matchesSearch) ? '' : 'none';
+      });
+    }
+
+    // ── UPDATE ORDER STATUS (AJAX) ──
+    async function updateOrderStatus(orderId, status) {
+      try {
+        const res = await fetch('/admin/orders/update-status/' + orderId, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+          body: 'status=' + encodeURIComponent(status)
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Đã cập nhật trạng thái đơn #' + orderId, 'success');
+        } else {
+          showToast('Lỗi cập nhật trạng thái', 'error');
+        }
+      } catch(err) {
+        showToast('Lỗi kết nối', 'error');
+        console.error(err);
+      }
+    }
+
+    // ── SAVE NOTE (AJAX) ──
+    async function saveNote() {
+      const orderId = document.getElementById('noteOrderId').value;
+      const note = document.getElementById('noteText').value;
+      const estimatedReadyTime = document.getElementById('noteEstimatedTime').value;
+      if (!orderId) return;
+      try {
+        const res = await fetch('/admin/orders/update-note', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+          body: 'orderId=' + encodeURIComponent(orderId) + '&note=' + encodeURIComponent(note) + '&estimatedReadyTime=' + encodeURIComponent(estimatedReadyTime)
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Đã lưu ghi chú cho đơn #' + orderId, 'success');
+          // Close modal
+          bootstrap.Modal.getInstance(document.getElementById('noteModal'))?.hide();
+        } else {
+          showToast('Lỗi lưu ghi chú', 'error');
+        }
+      } catch(err) {
+        showToast('Lỗi kết nối', 'error');
+      }
+    }
+
+    // ── DELETE CONFIRMATIONS (SweetAlert2) ──
+    function confirmDeleteProduct(id, name) {
+      Swal.fire({
+        title: 'Xóa sản phẩm?',
+        text: 'Sản phẩm "' + name + '" sẽ bị xóa vĩnh viễn.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#C94444',
+        cancelButtonColor: '#8B6F5E',
+        confirmButtonText: 'Xóa',
+        cancelButtonText: 'Hủy',
+        reverseButtons: true
+      }).then(result => {
+        if (result.isConfirmed) {
+          fetch('/admin/products/delete/' + id, { method: 'POST' })
+            .then(() => { showToast('Đã xóa sản phẩm "' + name + '"', 'success'); location.reload(); })
+            .catch(() => showToast('Lỗi xóa sản phẩm', 'error'));
         }
       });
     }
 
-    // Sidebar link event listeners
-    navLinks.forEach(link => {
-      link.addEventListener('click', (e) => {
-        const href = link.getAttribute('href');
-        if (href === '/') return; // Leave dashboard
-        
-        e.preventDefault();
-        const sectionId = href.startsWith('#') ? href.substring(1) : 'dashboard-stats';
-        showSection(sectionId);
+    function confirmDeleteUser(id, name) {
+      Swal.fire({
+        title: 'Xóa người dùng?',
+        text: 'Người dùng "' + name + '" và tất cả dữ liệu liên quan sẽ bị xóa.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#C94444',
+        cancelButtonColor: '#8B6F5E',
+        confirmButtonText: 'Xóa',
+        cancelButtonText: 'Hủy',
+        reverseButtons: true
+      }).then(result => {
+        if (result.isConfirmed) {
+          fetch('/admin/users/delete/' + id, { method: 'POST' })
+            .then(() => { showToast('Đã xóa người dùng "' + name + '"', 'success'); location.reload(); })
+            .catch(() => showToast('Lỗi xóa người dùng', 'error'));
+        }
       });
+    }
+
+    function confirmDeleteOrder(id) {
+      Swal.fire({
+        title: 'Xóa đơn hàng?',
+        text: 'Đơn hàng #' + id + ' sẽ bị xóa vĩnh viễn.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#C94444',
+        cancelButtonColor: '#8B6F5E',
+        confirmButtonText: 'Xóa',
+        cancelButtonText: 'Hủy',
+        reverseButtons: true
+      }).then(result => {
+        if (result.isConfirmed) {
+          fetch('/admin/orders/delete/' + id, { method: 'POST' })
+            .then(() => { showToast('Đã xóa đơn hàng #' + id, 'success'); location.reload(); })
+            .catch(() => showToast('Lỗi xóa đơn hàng', 'error'));
+        }
+      });
+    }
+
+    // ── EDIT PRODUCT MODAL ──
+    document.getElementById('editProductModal')?.addEventListener('show.bs.modal', function(event) {
+      const btn = event.relatedTarget;
+      document.getElementById('editProductForm').action = '/admin/products/update/' + btn.dataset.id;
+      document.getElementById('editId').value = btn.dataset.id;
+      document.getElementById('editName').value = btn.dataset.name;
+      document.getElementById('editPrice').value = btn.dataset.price;
+      document.getElementById('editImage').value = btn.dataset.image;
+      document.getElementById('editCategory').value = btn.dataset.category;
+      document.getElementById('editDescription').value = btn.dataset.description;
+      document.getElementById('editDiscount').value = btn.dataset.discount || 0;
+      document.getElementById('editBestSeller').checked = btn.dataset.bestseller === 'true';
+      document.getElementById('editPromoTag').value = btn.dataset.promotag || '';
     });
 
-    // Default: Show dashboard stats
-    showSection('dashboard-stats');
+    // ── ORDER DETAIL MODAL ──
+    document.getElementById('orderDetailModal')?.addEventListener('show.bs.modal', function(event) {
+      const btn = event.relatedTarget;
+      document.getElementById('detailOrderId').textContent = btn.dataset.id;
+      document.getElementById('detailUser').textContent = btn.dataset.user;
+      document.getElementById('detailTotal').textContent = Number(btn.dataset.total).toLocaleString('vi-VN') + 'đ';
+      document.getElementById('detailCreated').textContent = new Date(btn.dataset.created).toLocaleString('vi-VN');
+      const statusEl = document.getElementById('detailStatus');
+      const statusMap = { pending: '⏳ Đang chờ', processing: '🔧 Đang xử lý', completed: '✅ Hoàn thành', cancelled: '❌ Đã hủy' };
+      const statusColors = { pending: 'var(--co-warning)', processing: 'var(--co-primary-light)', completed: 'var(--co-success)', cancelled: 'var(--co-danger)' };
+      statusEl.textContent = statusMap[btn.dataset.status] || statusMap.pending;
+      statusEl.style.background = statusColors[btn.dataset.status] || statusColors.pending;
+      statusEl.style.color = '#fff';
+      // Items
+      const items = JSON.parse(btn.dataset.items || '[]');
+      document.getElementById('detailItems').innerHTML = items.length
+        ? items.map(item => '<div class="d-flex justify-content-between align-items-center py-2 border-bottom" style="border-color:var(--co-border) !important;"><div><strong>' + item.name + '</strong><span class="text-muted ms-2">x' + item.qty + '</span></div><div class="fw-semibold">' + Number(item.price).toLocaleString('vi-VN') + 'đ</div></div>').join('')
+        : '<p class="text-muted">Không có sản phẩm nào</p>';
+      // Note
+      const noteSection = document.getElementById('detailNoteSection');
+      const noteEl = document.getElementById('detailNote');
+      if (btn.dataset.note) {
+        noteSection.classList.remove('d-none');
+        noteEl.textContent = btn.dataset.note;
+      } else {
+        noteSection.classList.add('d-none');
+      }
+    });
+
+    // ── NOTE MODAL ──
+    document.getElementById('noteModal')?.addEventListener('show.bs.modal', function(event) {
+      const btn = event.relatedTarget;
+      document.getElementById('noteOrderId').value = btn.dataset.id;
+      document.getElementById('noteText').value = btn.dataset.note || '';
+      document.getElementById('noteEstimatedTime').value = btn.dataset.estimated ? new Date(btn.dataset.estimated).toISOString().slice(0, 16) : '';
+    });
+
+    // ── DARK MODE ──
+    const darkToggle = document.getElementById('darkModeToggle');
+    const darkIcon = document.getElementById('darkModeIcon');
+    const savedTheme = localStorage.getItem('adminTheme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    darkIcon.className = savedTheme === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
+
+    darkToggle.addEventListener('click', function() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('adminTheme', next);
+      darkIcon.className = next === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
+      showToast(next === 'dark' ? 'Đã bật chế độ tối' : 'Đã tắt chế độ tối', 'info');
+    });
+
+    // ── AUTO-REFRESH TOGGLE ──
+    let autoRefreshEnabled = localStorage.getItem('adminAutoRefresh') !== 'false';
+    let refreshInterval = null;
+    const refreshIcon = document.getElementById('autoRefreshIcon');
+    const refreshLabel = document.getElementById('refreshLabel');
+    const refreshIndicator = document.getElementById('refreshIndicator');
+
+    updateRefreshUI();
+
+    document.getElementById('autoRefreshToggle').addEventListener('click', function() {
+      autoRefreshEnabled = !autoRefreshEnabled;
+      localStorage.setItem('adminAutoRefresh', autoRefreshEnabled);
+      updateRefreshUI();
+      showToast(autoRefreshEnabled ? 'Tự động làm mới: BẬT (30s)' : 'Tự động làm mới: TẮT', 'info');
+    });
+
+    function updateRefreshUI() {
+      if (refreshInterval) { clearInterval(refreshInterval); refreshInterval = null; }
+      if (autoRefreshEnabled) {
+        refreshIcon.className = 'bi bi-arrow-repeat text-success';
+        refreshLabel.textContent = 'Tự động (30s)';
+        // Do first refresh after 30s
+        refreshInterval = setInterval(() => {
+          refreshIndicator.classList.add('refreshing');
+          fetch(window.location.href)
+            .then(r => r.text())
+            .then(html => {
+              // Update stats only (simple approach: reload full page)
+              // For a smooth UX, we just reload
+              location.reload();
+            })
+            .catch(() => {
+              refreshIndicator.classList.remove('refreshing');
+              showToast('Lỗi làm mới dữ liệu', 'error');
+            });
+        }, 30000);
+      } else {
+        refreshIcon.className = 'bi bi-arrow-repeat';
+        refreshLabel.textContent = 'Thủ công';
+      }
+    }
+
+    // ── MANUAL REFRESH ──
+    document.getElementById('manualRefresh').addEventListener('click', function() {
+      refreshIndicator.classList.add('refreshing');
+      location.reload();
+    });
+
+    // ── COUNTDOWN TIMERS ──
+    function updateCountdowns() {
+      document.querySelectorAll('.countdown').forEach(el => {
+        const time = el.dataset.time;
+        if (!time) return;
+        const target = new Date(time);
+        const now = new Date();
+        const diff = target - now;
+        const span = el.querySelector('.countdown-value');
+        if (!span) return;
+        if (diff <= 0) {
+          span.textContent = 'Đã đến giờ';
+          el.classList.add('overdue');
+        } else {
+          const mins = Math.floor(diff / 60000);
+          const hrs = Math.floor(mins / 60);
+          span.textContent = hrs > 0 ? hrs + 'h ' + (mins % 60) + 'm' : mins + ' phút';
+          el.classList.remove('overdue');
+        }
+      });
+    }
+    updateCountdowns();
+    setInterval(updateCountdowns, 30000);
+
+    // ── CHART.JS INITIALIZATION ──
+    const monthlyData = <%- stats.monthlyData %>;
+    let currentChart = null;
+    let isBarView = true;
+
+    function initChart() {
+      const ctx = document.getElementById('monthlyChart');
+      if (!ctx) return;
+
+      const labels = monthlyData.map(d => d.label);
+      const orders = monthlyData.map(d => d.orders);
+      const maxOrders = Math.max(...orders, 1);
+      const avgOrders = Math.round(orders.reduce((a, b) => a + b, 0) / orders.length);
+
+      // Bar colors: highlight peak (green), low (red), above avg (secondary), below (primary-light)
+      const barColors = orders.map(v => {
+        if (v === maxOrders) return '#3D8B6E';
+        if (v === Math.min(...orders) && v > 0) return '#C94444';
+        if (v >= avgOrders) return '#C8956C';
+        return '#8B6F5E';
+      });
+
+      currentChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Đơn hàng',
+            data: orders,
+            backgroundColor: barColors,
+            borderRadius: 4,
+            barPercentage: 0.7
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#2C1810',
+              titleColor: '#fff',
+              bodyColor: '#fff',
+              padding: 12,
+              cornerRadius: 8,
+              callbacks: {
+                label: function(ctx) {
+                  const item = monthlyData[ctx.dataIndex];
+                  const trendSign = item.trend > 0 ? '↑' : item.trend < 0 ? '↓' : '→';
+                  return [
+                    '📦 ' + item.orders + ' đơn hàng',
+                    '💰 ' + item.revenue.toLocaleString('vi-VN') + 'đ',
+                    trendSign + ' ' + Math.abs(item.trend) + '% vs tháng trước'
+                  ];
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              border: { display: false },
+              ticks: { font: { size: 11 } }
+            },
+            y: {
+              grid: { color: 'rgba(74,44,42,0.06)', lineWidth: 0.5 },
+              border: { display: false },
+              ticks: { font: { size: 11 } }
+            }
+          },
+          animation: { duration: 800, easing: 'easeInOutQuart' }
+        }
+      });
+
+      // Update summary panel
+      document.getElementById('chartTotalOrders').textContent = orders.reduce((a, b) => a + b, 0).toLocaleString('vi-VN');
+      document.getElementById('chartAvgOrders').textContent = avgOrders.toLocaleString('vi-VN');
+      const best = monthlyData.reduce((a, b) => a.orders > b.orders ? a : b);
+      const worst = monthlyData.reduce((a, b) => a.orders < b.orders ? a : b);
+      document.getElementById('chartBestMonth').textContent = best.label;
+      document.getElementById('chartWorstMonth').textContent = worst.label;
+    }
+
+    // Toggle between horizontal bar and line chart
+    document.getElementById('toggleChartType').addEventListener('click', function() {
+      if (!currentChart) return;
+      isBarView = !isBarView;
+      currentChart.destroy();
+      const ctx = document.getElementById('monthlyChart');
+      const labels = monthlyData.map(d => d.label);
+      const orders = monthlyData.map(d => d.orders);
+
+      if (isBarView) {
+        // Horizontal bar
+        initChart();
+        this.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Biểu đồ cột';
+      } else {
+        // Line chart
+        const lineColors = orders.map(v => v === Math.max(...orders) ? '#3D8B6E' : v === Math.min(...orders) ? '#C94444' : '#C8956C');
+        currentChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Đơn hàng',
+              data: orders,
+              borderColor: '#C8956C',
+              backgroundColor: 'rgba(200,149,108,0.1)',
+              fill: true,
+              tension: 0.3,
+              pointBackgroundColor: lineColors,
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2,
+              pointRadius: 5,
+              pointHoverRadius: 8
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: '#2C1810',
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                padding: 12,
+                cornerRadius: 8,
+                callbacks: {
+                  label: function(ctx) {
+                    const item = monthlyData[ctx.dataIndex];
+                    const trendSign = item.trend > 0 ? '↑' : item.trend < 0 ? '↓' : '→';
+                    return [
+                      '📦 ' + item.orders + ' đơn hàng',
+                      '💰 ' + item.revenue.toLocaleString('vi-VN') + 'đ',
+                      trendSign + ' ' + Math.abs(item.trend) + '% vs tháng trước'
+                    ];
+                  }
+                }
+              }
+            },
+            scales: {
+              x: { grid: { display: false }, border: { display: false } },
+              y: { beginAtZero: true, grid: { color: 'rgba(74,44,42,0.06)' }, border: { display: false } }
+            },
+            animation: { duration: 800, easing: 'easeInOutQuart' }
+          }
+        });
+        this.innerHTML = '<i class="bi bi-graph-up me-1"></i> Biểu đồ đường';
+      }
+    });
+
+    // CSV Export
+    document.getElementById('exportCSV').addEventListener('click', function() {
+      const headers = ['Tháng', 'Đơn hàng', 'Doanh thu', 'Tăng trưởng (%)', 'Xu hướng'];
+      const rows = monthlyData.map(d => {
+        const trendIcon = d.trend > 10 ? 'Tăng mạnh' : d.trend > 0 ? 'Tăng' : d.trend < -10 ? 'Giảm mạnh' : d.trend < 0 ? 'Giảm' : 'Ổn định';
+        return [d.label, d.orders, d.revenue, d.trend, trendIcon];
+      });
+      // Add summary
+      const totalOrders = monthlyData.reduce((s, d) => s + d.orders, 0);
+      const totalRevenue = monthlyData.reduce((s, d) => s + d.revenue, 0);
+      const avgOrders = Math.round(totalOrders / monthlyData.length);
+      rows.push(['---TÓM TẮT---', '', '', '', '']);
+      rows.push(['Tổng đơn hàng', totalOrders, '', '', '']);
+      rows.push(['Tổng doanh thu', '', totalRevenue, '', '']);
+      rows.push(['TB đơn/tháng', avgOrders, '', '', '']);
+
+      const csv = '﻿' + headers.join(',') + '\n' + rows.map(r => r.join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'dashboard_' + new Date().toISOString().split('T')[0] + '.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Đã xuất file CSV', 'success');
+    });
+
+    // Initialize chart on page load
+    initChart();
+
+    // ── SIDEBAR ACTIVE STATE ON PAGE LOAD ──
+    if (!window.location.hash) {
+      showSection('dashboard-stats');
+    }
   </script>
 </body>
 </html>

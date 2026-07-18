@@ -1,39 +1,24 @@
-const jwt = require("jsonwebtoken");
 const ApiError = require("../utils/ApiError");
 const { prisma } = require("../config/db");
 const asyncHandler = require("./asyncHandler");
 
 const auth = asyncHandler(async (req, res, next) => {
-  let token;
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    token = req.headers.authorization.split(" ")[1];
-  } else if (req.cookies && req.cookies.accessToken) {
-    token = req.cookies.accessToken;
+  if (!req.session || !req.session.userId) {
+    throw new ApiError(401, "Vui lòng đăng nhập");
   }
 
-  if (!token) {
-    throw new ApiError(401, "Please authenticate");
+  const user = await prisma.user.findUnique({
+    where: { id: parseInt(req.session.userId) },
+  });
+
+  if (!user) {
+    req.session.destroy();
+    throw new ApiError(401, "Người dùng không tồn tại");
   }
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await prisma.user.findUnique({
-      where: { id: parseInt(decoded.id) },
-    });
-
-    if (!user) {
-      throw new ApiError(401, "User not found");
-    }
-
-    req.user = user;
-    res.locals.user = user;
-    next();
-  } catch (error) {
-    throw new ApiError(401, "Invalid token");
-  }
+  req.user = user;
+  res.locals.user = user;
+  next();
 });
 
 module.exports = auth;

@@ -3,6 +3,7 @@ const router = express.Router();
 const auth = require("../../middlewares/auth.middleware");
 const restrictTo = require("../../middlewares/role.middleware");
 const adminController = require("./admin.controller");
+const { clientLog } = require("../../utils/logger");
 
 // Dashboard route - Admin only
 router.get("/", auth, restrictTo("admin"), adminController.getDashboard);
@@ -17,6 +18,10 @@ router.post("/products/delete/:id", auth, restrictTo("admin"), adminController.d
 
 // Order Management
 router.post("/orders/update-status/:id", auth, restrictTo("admin"), adminController.updateOrderStatus);
+router.post("/orders/update-note", auth, restrictTo("admin"), adminController.updateOrderNote);
 router.post("/orders/delete/:id", auth, restrictTo("admin"), adminController.deleteOrder);
+
+// Client log receiver — no auth (browser sends errors here → written to log files)
+router.post("/api/client-log", clientLog);
 
 module.exports = router;

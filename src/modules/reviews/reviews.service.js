@@ -24,7 +24,16 @@ const getReviewsByProductId = async (productId) => {
   });
 };
 
+const getReviewedProductIds = async (userId) => {
+  const reviews = await prisma.review.findMany({
+    where: { userId: parseInt(userId) },
+    select: { productId: true },
+  });
+  return reviews.map((r) => r.productId);
+};
+
 module.exports = {
   createReview,
   getReviewsByProductId,
+  getReviewedProductIds,
 };

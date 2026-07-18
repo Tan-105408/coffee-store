@@ -4,112 +4,64 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= product.name %> - Coffee Store</title>
-  <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <!-- Custom CSS -->
   <link rel="stylesheet" href="/style.css">
 </head>
-<body class="d-flex flex-column min-vh-100 bg-light">
-  <!-- Header / Navbar -->
-  <header>
-    <nav class="navbar navbar-expand-lg co-navbar navbar-dark sticky-top">
-      <div class="container">
-        <a class="navbar-brand d-flex align-items-center" href="/">
-          <span class="fs-3 me-2">☕</span>
-          <span class="font-serif fw-bold">Coffee Store</span>
-        </a>
-        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#coNavbar">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="coNavbar">
-          <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
-            <li class="nav-item">
-              <a class="nav-link" href="/"><i class="bi bi-house-door me-1"></i> Trang chủ</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/cart"><i class="bi bi-cart3 me-1"></i> Giỏ hàng</a>
-            </li>
-          </ul>
-          <div class="d-flex align-items-center gap-2">
-            <% if (user) { %>
-              <div class="dropdown">
-                <button class="co-btn co-btn-secondary dropdown-toggle px-3 py-2 btn-sm text-white" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false" style="background-color: rgba(255,255,255,0.15); border: none;">
-                  <i class="bi bi-person-circle me-1"></i> 👋 <%= user.username %>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg mt-2">
-                  <li><a class="dropdown-item py-2" href="/auth/profile"><i class="bi bi-person me-2 text-primary"></i>Hồ sơ</a></li>
-                  <li><hr class="dropdown-divider"></li>
-                  <li><a class="dropdown-item py-2 text-danger" href="/auth/logout"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</a></li>
-                </ul>
-              </div>
-            <% } else { %>
-              <a href="/auth/login" class="co-btn co-btn-secondary px-3 py-2 btn-sm text-white border-0" style="background-color: rgba(255,255,255,0.1);"><i class="bi bi-box-arrow-in-right me-1"></i> Đăng nhập</a>
-              <a href="/auth/register" class="co-btn co-btn-accent px-3 py-2 btn-sm"><i class="bi bi-person-plus me-1"></i> Đăng ký</a>
-            <% } %>
-          </div>
-        </div>
-      </div>
-    </nav>
-  </header>
+<body class="d-flex flex-column min-vh-100">
+  <%- include('partials/navbar') %>
 
-  <!-- Product Detail Section -->
+  <!-- Product Detail -->
   <main class="container flex-grow-1 py-5">
-    
     <div class="row g-5">
-      <!-- Product Image Column -->
+      <!-- Image Column -->
       <div class="col-lg-6 col-12">
-        <div class="position-relative overflow-hidden rounded-4 shadow-lg bg-white p-3">
+        <div class="position-relative overflow-hidden bg-white p-3" style="border-radius:var(--co-radius-xl);box-shadow:var(--co-shadow-lg);">
           <% if (product.discount > 0) { %>
-            <div class="co-discount-badge" style="top: 25px; right: 25px; font-size: 0.9rem; padding: 8px 16px;">
+            <div class="co-discount-badge" style="top:20px;right:20px;font-size:0.85rem;padding:8px 16px;">
               <i class="bi bi-tag-fill me-1"></i>-<%= product.discount %>% GIẢM
             </div>
           <% } %>
-          <img src="<%= product.image %>" alt="<%= product.name %>" class="w-100 object-fit-cover rounded-3" style="height: 480px;" />
+          <img src="<%= product.image %>" alt="<%= product.name %>" class="w-100 object-fit-cover" style="height:480px;border-radius:var(--co-radius-lg);" />
         </div>
       </div>
 
-      <!-- Product Info Column -->
+      <!-- Info Column -->
       <div class="col-lg-6 col-12 d-flex flex-column justify-content-between">
-        <div class="co-detail-card h-100 d-flex flex-column justify-content-between shadow-lg">
+        <div class="co-detail-card h-100 d-flex flex-column justify-content-between">
           <div>
-            <span class="text-uppercase text-muted fw-bold small tracking-wider"><%= product.category %></span>
+            <span class="co-product-category"><%= product.category %></span>
             <h2 class="font-serif display-6 fw-bold mt-1 mb-3"><%= product.name %></h2>
-            
-            <p class="text-muted fs-6 mb-4 lead" style="line-height: 1.8;">
-              <%= product.description || 'Hương vị tuyệt hảo được phối trộn từ những hạt cà phê hảo hạng, mang lại cảm giác sảng khoái và tỉnh táo tức thì cho ngày mới năng động của bạn.' %>
+
+            <p class="fs-6 mb-4" style="color:var(--co-text-secondary);line-height:1.8;">
+              <%= product.description || 'Hương vị tuyệt hảo được phối trộn từ những hạt cà phê hảo hạng, mang lại cảm giác sảng khoái và tỉnh táo tức thì.' %>
             </p>
-            
+
             <!-- Price Row -->
-            <div class="bg-light p-3 rounded-3 mb-4 d-flex align-items-center gap-3">
+            <div class="mb-4 p-3 d-flex align-items-center gap-3" style="background:var(--co-bg);border-radius:var(--co-radius);">
               <% if (product.discount > 0) { %>
-                <span class="fs-4 text-decoration-line-through text-muted"><%= product.price.toLocaleString() %>đ</span>
-                <span class="fs-2 fw-extrabold text-danger" style="color: var(--co-accent) !important;"><%= (product.price * (1 - product.discount / 100)).toLocaleString() %>đ</span>
+                <span class="fs-4 text-decoration-line-through text-co-muted"><%= product.price.toLocaleString() %>đ</span>
+                <span class="fs-2 fw-extrabold" style="color:var(--co-accent);"><%= (product.price * (1 - product.discount / 100)).toLocaleString() %>đ</span>
               <% } else { %>
-                <span class="fs-2 fw-extrabold text-primary" style="color: var(--co-primary) !important;"><%= product.price.toLocaleString() %>đ</span>
+                <span class="fs-2 fw-extrabold" style="color:var(--co-primary);"><%= product.price.toLocaleString() %>đ</span>
               <% } %>
             </div>
 
-            <!-- Customization Options -->
+            <!-- Options -->
             <div class="mb-4">
               <!-- Ice Level -->
               <div class="mb-3">
-                <label class="fw-semibold text-muted small text-uppercase d-block mb-2">
-                  <i class="bi bi-snow2 me-1 text-info"></i> Độ đá
+                <label class="fw-semibold small text-uppercase d-block mb-2" style="color:var(--co-text-muted);">
+                  <i class="bi bi-snow2 me-1" style="color:var(--co-success);"></i> Độ đá
                 </label>
                 <div class="d-flex flex-wrap gap-2">
                   <input type="radio" class="btn-check" name="iceLevel" id="ice-none" value="Không đá" checked>
                   <label class="co-option-chip" for="ice-none">Không đá</label>
-
                   <input type="radio" class="btn-check" name="iceLevel" id="ice-less" value="Ít đá">
                   <label class="co-option-chip" for="ice-less">Ít đá</label>
-
                   <input type="radio" class="btn-check" name="iceLevel" id="ice-normal" value="Bình thường">
                   <label class="co-option-chip" for="ice-normal">Bình thường</label>
-
                   <input type="radio" class="btn-check" name="iceLevel" id="ice-more" value="Nhiều đá">
                   <label class="co-option-chip" for="ice-more">Nhiều đá</label>
                 </div>
@@ -117,16 +69,14 @@
 
               <!-- Sugar Level -->
               <div class="mb-3">
-                <label class="fw-semibold text-muted small text-uppercase d-block mb-2">
-                  <i class="bi bi-droplet-half me-1 text-warning"></i> Độ ngọt
+                <label class="fw-semibold small text-uppercase d-block mb-2" style="color:var(--co-text-muted);">
+                  <i class="bi bi-droplet-half me-1 text-co-warning"></i> Độ ngọt
                 </label>
                 <div class="d-flex flex-wrap gap-2">
                   <input type="radio" class="btn-check" name="sugarLevel" id="sugar-low" value="Ít ngọt (25%)">
                   <label class="co-option-chip" for="sugar-low">Ít ngọt</label>
-
                   <input type="radio" class="btn-check" name="sugarLevel" id="sugar-normal" value="Bình thường (50%)" checked>
                   <label class="co-option-chip" for="sugar-normal">Bình thường</label>
-
                   <input type="radio" class="btn-check" name="sugarLevel" id="sugar-high" value="Nhiều ngọt (75%)">
                   <label class="co-option-chip" for="sugar-high">Nhiều ngọt</label>
                 </div>
@@ -134,58 +84,48 @@
 
               <!-- Toppings -->
               <div>
-                <label class="fw-semibold text-muted small text-uppercase d-block mb-2">
-                  <i class="bi bi-plus-circle me-1 text-success"></i> Topping <span class="text-lowercase fw-normal">(có thể chọn nhiều)</span>
+                <label class="fw-semibold small text-uppercase d-block mb-2" style="color:var(--co-text-muted);">
+                  <i class="bi bi-plus-circle me-1 text-co-success"></i> Topping <span class="text-lowercase fw-normal">(có thể chọn nhiều)</span>
                 </label>
                 <div class="d-flex flex-wrap gap-2">
                   <input type="checkbox" class="btn-check" name="toppings" id="top-whipping" value="whipping" data-price="5000">
-                  <label class="co-option-chip co-option-chip-check" for="top-whipping">
-                    Whipping cream <span class="co-option-price">+5.000đ</span>
-                  </label>
+                  <label class="co-option-chip co-option-chip-check" for="top-whipping">Whipping cream <span class="co-option-price">+5.000đ</span></label>
 
                   <input type="checkbox" class="btn-check" name="toppings" id="top-cheese" value="cheese" data-price="8000">
-                  <label class="co-option-chip co-option-chip-check" for="top-cheese">
-                    Kem cheese <span class="co-option-price">+8.000đ</span>
-                  </label>
+                  <label class="co-option-chip co-option-chip-check" for="top-cheese">Kem cheese <span class="co-option-price">+8.000đ</span></label>
 
                   <input type="checkbox" class="btn-check" name="toppings" id="top-coffee-jelly" value="coffee_jelly" data-price="6000">
-                  <label class="co-option-chip co-option-chip-check" for="top-coffee-jelly">
-                    Thạch cà phê <span class="co-option-price">+6.000đ</span>
-                  </label>
+                  <label class="co-option-chip co-option-chip-check" for="top-coffee-jelly">Thạch cà phê <span class="co-option-price">+6.000đ</span></label>
 
                   <input type="checkbox" class="btn-check" name="toppings" id="top-boba" value="boba" data-price="5000">
-                  <label class="co-option-chip co-option-chip-check" for="top-boba">
-                    Trân châu <span class="co-option-price">+5.000đ</span>
-                  </label>
+                  <label class="co-option-chip co-option-chip-check" for="top-boba">Trân châu <span class="co-option-price">+5.000đ</span></label>
                 </div>
               </div>
             </div>
 
-            <!-- Quantity Selector -->
+            <!-- Quantity -->
             <div class="d-flex align-items-center gap-3 mb-4">
-              <label for="quantity" class="fw-semibold text-muted small text-uppercase">Số lượng:</label>
-              <div class="input-group" style="width: 140px;">
-                <button class="btn btn-outline-secondary border-1.5" type="button" onclick="decrementQty()"><i class="bi bi-dash"></i></button>
-                <input type="number" id="quantity" value="1" min="1" class="form-control text-center fw-bold co-form-control" style="border-radius: 0; border-width: 1.5px;">
-                <button class="btn btn-outline-secondary border-1.5" type="button" onclick="incrementQty()"><i class="bi bi-plus"></i></button>
+              <label for="quantity" class="fw-semibold small text-uppercase mb-0" style="color:var(--co-text-muted);">Số lượng:</label>
+              <div class="input-group" style="width:140px;">
+                <button class="btn btn-outline-secondary" type="button" onclick="decrementQty()"><i class="bi bi-dash"></i></button>
+                <input type="number" id="quantity" value="1" min="1" class="form-control text-center fw-bold co-form-control" style="border-radius:0;">
+                <button class="btn btn-outline-secondary" type="button" onclick="incrementQty()"><i class="bi bi-plus"></i></button>
               </div>
             </div>
           </div>
 
-          <!-- Total display & Actions -->
-          <div class="border-top pt-4 mt-auto">
+          <!-- Total & Actions -->
+          <div class="border-top pt-4 mt-auto" style="border-color:var(--co-border) !important;">
             <div class="d-flex justify-content-between align-items-baseline mb-4">
-              <span class="text-muted fw-semibold small text-uppercase">Tạm tính:</span>
-              <h4 class="m-0 font-serif fw-bold text-success" id="total-amount-display" style="color: var(--co-success) !important;">
+              <span class="fw-semibold small text-uppercase" style="color:var(--co-text-muted);">Tạm tính:</span>
+              <h4 class="m-0 font-serif fw-bold" style="color:var(--co-success);" id="total-amount-display">
                 <span id="total-amount"><%= (product.price * (1 - product.discount / 100)).toLocaleString() %></span>đ
               </h4>
             </div>
 
             <div class="d-flex gap-3">
-              <a href="/" class="co-btn co-btn-secondary flex-fill py-3">
-                <i class="bi bi-arrow-left"></i> Menu
-              </a>
-              <button id="add-to-cart-btn" class="co-btn co-btn-primary add-to-cart flex-fill py-3 text-uppercase" data-id="<%= product.id %>" style="letter-spacing: 1px;">
+              <a href="/" class="co-btn co-btn-secondary co-btn-sm flex-fill py-3"><i class="bi bi-arrow-left"></i> Menu</a>
+              <button id="add-to-cart-btn" class="co-btn co-btn-primary add-to-cart co-btn-sm flex-fill py-3 text-uppercase" data-id="<%= product.id %>" style="letter-spacing:0.5px;">
                 <i class="bi bi-cart-plus-fill me-1"></i> Thêm vào giỏ hàng
               </button>
             </div>
@@ -194,172 +134,100 @@
       </div>
     </div>
 
-    <!-- Review Section -->
+    <!-- Reviews -->
     <section class="mt-5 pt-4">
-      <div class="border-bottom pb-3 mb-4 d-flex justify-content-between align-items-center">
-        <h3 class="font-serif fw-bold m-0"><i class="bi bi-chat-left-heart me-2 text-warning"></i> Đánh giá từ khách hàng</h3>
-        <span class="badge bg-secondary rounded-pill px-3 py-2"><%= (reviews && reviews.length) || 0 %> phản hồi</span>
+      <div class="border-bottom pb-3 mb-4 d-flex justify-content-between align-items-center" style="border-color:var(--co-border) !important;">
+        <h3 class="font-serif fw-bold m-0"><i class="bi bi-chat-left-heart me-2 text-co-warning"></i> Đánh giá từ khách hàng</h3>
+        <span class="badge px-3 py-2" style="background:var(--co-bg);color:var(--co-text-secondary);border:1px solid var(--co-border-strong);font-size:0.8rem;">
+          <%= (reviews && reviews.length) || 0 %> phản hồi
+        </span>
       </div>
 
       <div class="row">
         <div class="col-lg-8 col-12">
           <% if (reviews && reviews.length > 0) { %>
             <% reviews.forEach(review => { %>
-              <div class="co-review-card shadow-sm">
+              <div class="co-review-card">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                  <span class="fw-bold text-dark"><i class="bi bi-person-fill text-muted me-1"></i> <%= review.user ? review.user.username : 'Ẩn danh' %></span>
-                  <div class="text-warning">
+                  <span class="fw-semibold text-dark"><i class="bi bi-person-fill text-co-muted me-1"></i> <%= review.user ? review.user.username : 'Ẩn danh' %></span>
+                  <div class="text-co-warning">
                     <% for(let i=0; i<5; i++) { %>
-                      <% if(i < review.rating) { %>
-                        <i class="bi bi-star-fill"></i>
-                      <% } else { %>
-                        <i class="bi bi-star"></i>
-                      <% } %>
+                      <% if(i < review.rating) { %><i class="bi bi-star-fill"></i><% } else { %><i class="bi bi-star"></i><% } %>
                     <% } %>
                   </div>
                 </div>
-                <p class="m-0 text-muted" style="font-size: 0.95rem;"><%= review.comment %></p>
+                <p class="m-0 small" style="color:var(--co-text-secondary);"><%= review.comment %></p>
               </div>
             <% }) %>
           <% } else { %>
-              <div class="text-center bg-white rounded-4 p-5 shadow-sm border border-light">
-                <i class="bi bi-chat-left-text text-muted" style="font-size: 2.5rem;"></i>
-                <p class="text-muted mt-3 mb-0">Chưa có đánh giá nào cho món này. Hãy mua ngay để là người đầu tiên đánh giá nhé!</p>
-              </div>
-            <% } %>
+            <div class="text-center bg-white p-5" style="border-radius:var(--co-radius-lg);box-shadow:var(--co-shadow-sm);border:1px dashed var(--co-border-strong);">
+              <i class="bi bi-chat-left-text text-co-muted" style="font-size:2.5rem;"></i>
+              <p class="text-co-muted mt-3 mb-0">Chưa có đánh giá. Hãy mua ngay để là người đầu tiên!</p>
+            </div>
+          <% } %>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- Footer -->
-  <footer class="co-footer">
-    <div class="container text-center">
-      <p class="m-0 text-white-50 small">&copy; 2026 Coffee Store. Tất cả quyền được bảo lưu.</p>
-    </div>
-  </footer>
+  <%- include('partials/footer') %>
 
-  <!-- Bootstrap 5 JS Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Global script -->
   <script src="/script.js"></script>
-  
-  <!-- Local calculation scripts -->
+
   <script>
-    const productData = {
-      price: "<%= product.price || 0 %>",
-      discount: "<%= product.discount || 0 %>"
-    };
+    const productData = { price: "<%= product.price || 0 %>", discount: "<%= product.discount || 0 %>" };
     const basePrice = parseFloat(productData.price) * (1 - parseFloat(productData.discount) / 100);
-
-    const TOPPING_PRICES = {
-      whipping: 5000,
-      cheese: 8000,
-      coffee_jelly: 6000,
-      boba: 5000,
-    };
-
-    const TOPPING_LABELS = {
-      whipping: "Whipping cream",
-      cheese: "Kem cheese",
-      coffee_jelly: "Thạch cà phê",
-      boba: "Trân châu",
-    };
-
+    const TOPPING_PRICES = { whipping: 5000, cheese: 8000, coffee_jelly: 6000, boba: 5000 };
+    const TOPPING_LABELS = { whipping: "Whipping cream", cheese: "Kem cheese", coffee_jelly: "Thạch cà phê", boba: "Trân châu" };
     const quantityInput = document.getElementById("quantity");
     const totalAmountSpan = document.getElementById("total-amount");
 
-    const getToppingTotal = () => {
-      return [...document.querySelectorAll('input[name="toppings"]:checked')]
-        .reduce((sum, cb) => sum + (TOPPING_PRICES[cb.value] || 0), 0);
-    };
+    const getToppingTotal = () => [...document.querySelectorAll('input[name="toppings"]:checked')].reduce((sum, cb) => sum + (TOPPING_PRICES[cb.value] || 0), 0);
 
     const updateCalculatedPrice = () => {
       const qty = parseInt(quantityInput.value) || 1;
-      const toppingTotal = getToppingTotal();
-      const total = (basePrice + toppingTotal) * qty;
+      const total = (basePrice + getToppingTotal()) * qty;
       totalAmountSpan.textContent = total.toLocaleString('vi-VN');
     };
 
-    const incrementQty = () => {
-      quantityInput.value = parseInt(quantityInput.value) + 1;
-      updateCalculatedPrice();
-    };
-
-    const decrementQty = () => {
-      const current = parseInt(quantityInput.value);
-      if (current > 1) {
-        quantityInput.value = current - 1;
-        updateCalculatedPrice();
-      }
-    };
+    const incrementQty = () => { quantityInput.value = parseInt(quantityInput.value) + 1; updateCalculatedPrice(); };
+    const decrementQty = () => { const c = parseInt(quantityInput.value); if (c > 1) { quantityInput.value = c - 1; updateCalculatedPrice(); } };
 
     quantityInput.addEventListener("input", () => {
-      if (parseInt(quantityInput.value) < 1 || isNaN(parseInt(quantityInput.value))) {
-        quantityInput.value = 1;
-      }
+      if (parseInt(quantityInput.value) < 1 || isNaN(parseInt(quantityInput.value))) quantityInput.value = 1;
       updateCalculatedPrice();
     });
 
-    // Listen to topping changes
-    document.querySelectorAll('input[name="toppings"]').forEach(cb => {
-      cb.addEventListener("change", updateCalculatedPrice);
-    });
+    document.querySelectorAll('input[name="toppings"]').forEach(cb => cb.addEventListener("change", updateCalculatedPrice));
 
-    // Override add-to-cart to include options
     document.getElementById("add-to-cart-btn").addEventListener("click", async function(e) {
       e.preventDefault();
       e.stopPropagation();
-
       const productId = this.getAttribute("data-id");
       const qty = parseInt(quantityInput.value) || 1;
-
-      // Gather selected options
       const iceEl = document.querySelector('input[name="iceLevel"]:checked');
       const sugarEl = document.querySelector('input[name="sugarLevel"]:checked');
       const toppingEls = document.querySelectorAll('input[name="toppings"]:checked');
-
       const options = {
         ice: iceEl ? iceEl.value : "Bình thường",
         sugar: sugarEl ? sugarEl.value : "Bình thường",
-        toppings: [...toppingEls].map(cb => ({
-          id: cb.value,
-          name: TOPPING_LABELS[cb.value],
-          price: TOPPING_PRICES[cb.value],
-        })),
+        toppings: [...toppingEls].map(cb => ({ id: cb.value, name: TOPPING_LABELS[cb.value], price: TOPPING_PRICES[cb.value] })),
         toppingTotal: getToppingTotal(),
       };
-
       try {
-        const response = await apiFetch("/cart/add", {
-          method: "POST",
-          body: JSON.stringify({ productId, quantity: qty, options }),
-        });
+        const response = await apiFetch("/cart/add", { method: "POST", body: JSON.stringify({ productId, quantity: qty, options }) });
         const data = await response.json();
         if (data.success) {
-          Swal.fire({
-            text: "Đã thêm vào giỏ hàng!",
-            icon: "success",
-            toast: true,
-            position: "top-end",
-            showConfirmButton: false,
-            timer: 2000,
-            timerProgressBar: true,
-            iconColor: "#2a9d8f",
-            background: "#fff",
-            color: "#2b221e",
-          });
+          Swal.fire({ text: "Đã thêm vào giỏ hàng!", icon: "success", toast: true, position: "top-end", showConfirmButton: false, timer: 2000, timerProgressBar: true });
         } else {
-          Swal.fire({
-            text: data.message || "Lỗi khi thêm vào giỏ.",
-            icon: "error",
-            toast: true, position: "top-end", showConfirmButton: false, timer: 3000,
-          });
+          Swal.fire({ text: data.message || "Lỗi khi thêm vào giỏ.", icon: "error", toast: true, position: "top-end", showConfirmButton: false, timer: 3000 });
         }
       } catch (err) {
         Swal.fire({ text: "Có lỗi xảy ra.", icon: "error", toast: true, position: "top-end", showConfirmButton: false, timer: 3000 });
       }
     });
   </script>
+  <script src="/client-logger.js"></script>
 </body>
 </html>

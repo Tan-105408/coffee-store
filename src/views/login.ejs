@@ -4,94 +4,88 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Đăng nhập - Coffee Store</title>
-  <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <!-- Custom CSS -->
   <link rel="stylesheet" href="/style.css">
 </head>
-<body class="d-flex flex-column min-vh-100 bg-light">
-  <!-- Header / Navbar -->
-  <header>
-    <nav class="navbar navbar-expand-lg co-navbar navbar-dark sticky-top">
-      <div class="container">
-        <a class="navbar-brand d-flex align-items-center" href="/">
+<body>
+  <div class="row g-0 auth-split">
+    <!-- Form Side -->
+    <div class="col-md-6 auth-form-side">
+      <div class="auth-form-card">
+        <a href="/" class="d-inline-flex align-items-center text-decoration-none mb-4" style="color:var(--co-primary);">
           <span class="fs-3 me-2">☕</span>
-          <span class="font-serif fw-bold">Coffee Store</span>
+          <span class="font-serif fw-bold fs-5">Coffee Store</span>
         </a>
-        <div class="navbar-nav ms-auto">
-          <a class="nav-link" href="/"><i class="bi bi-house-door me-1"></i> Trang chủ</a>
-        </div>
-      </div>
-    </nav>
-  </header>
 
-  <!-- Login Card Container -->
-  <main class="container flex-grow-1 d-flex align-items-center justify-content-center py-5">
-    <div class="co-auth-card w-100 shadow-lg">
-      <div class="text-center mb-4">
-        <span class="fs-1">☕</span>
-        <h2 class="font-serif mt-2 mb-1 fw-bold">Chào Mừng Trở Lại!</h2>
-        <p class="text-muted small">Hãy đăng nhập để thưởng thức những ly cà phê tuyệt hảo</p>
-      </div>
+        <h2 class="font-serif fw-bold mb-1">Chào Mừng Trở Lại!</h2>
+        <p class="small mb-4" style="color:var(--co-text-muted);">Đăng nhập để thưởng thức cà phê tuyệt hảo</p>
 
-      <!-- Login Form -->
-      <form action="/auth/login" method="POST" id="loginForm">
-        <div class="mb-3">
-          <label class="form-label fw-semibold small text-muted">Tên đăng nhập</label>
-          <div class="input-group">
-            <span class="input-group-text bg-white border-end-0" style="border: 1.5px solid rgba(92, 62, 53, 0.12); color: var(--co-primary);"><i class="bi bi-person"></i></span>
-            <input type="text" name="username" id="username" class="form-control co-form-control border-start-0" placeholder="Nhập tên đăng nhập của bạn" required minlength="3">
-            <div class="invalid-feedback">Tên đăng nhập phải có ít nhất 3 ký tự</div>
+        <% if (typeof error !== 'undefined' && error) { %>
+          <div class="alert alert-danger d-flex align-items-center py-2" role="alert" style="border-radius:var(--co-radius-sm);font-size:0.9rem;">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>
+            <span><%= error %></span>
           </div>
-        </div>
+        <% } %>
 
-        <div class="mb-4">
-          <label class="form-label fw-semibold small text-muted">Mật khẩu</label>
-          <div class="input-group">
-            <span class="input-group-text bg-white border-end-0" style="border: 1.5px solid rgba(92, 62, 53, 0.12); color: var(--co-primary);"><i class="bi bi-shield-lock"></i></span>
-            <input type="password" name="password" id="password" class="form-control co-form-control border-start-0" placeholder="Nhập mật khẩu" required minlength="6">
-            <button class="btn btn-outline-secondary border-start-0 border" type="button" id="togglePassword">
-              <i class="bi bi-eye"></i>
-            </button>
+        <form action="/auth/login" method="POST" id="loginForm">
+          <div class="mb-3">
+            <label class="form-label fw-semibold small" style="color:var(--co-text-muted);">Tên đăng nhập</label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0"><i class="bi bi-person"></i></span>
+              <input type="text" name="username" id="username" class="form-control co-form-control border-start-0" placeholder="Nhập tên đăng nhập" required minlength="3">
+            </div>
           </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small" style="color:var(--co-text-muted);">Mật khẩu</label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0"><i class="bi bi-shield-lock"></i></span>
+              <input type="password" name="password" id="password" class="form-control co-form-control border-start-0" placeholder="Nhập mật khẩu" required minlength="6">
+              <button class="btn btn-outline-secondary border-start-0 border" type="button" id="togglePassword">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end mb-3">
+            <a href="/auth/forgot-password" class="small text-decoration-none fw-semibold" style="color:var(--co-secondary);">Quên mật khẩu?</a>
+          </div>
+
+          <button type="submit" class="co-btn co-btn-primary w-100 py-2.5 mb-3" id="loginBtn">
+            <span id="loginBtnText"><i class="bi bi-box-arrow-in-right me-1"></i> Đăng nhập</span>
+            <span id="loginBtnSpinner" class="spinner-border spinner-border-sm me-2" style="display:none;"></span>
+          </button>
+        </form>
+
+        <div class="auth-divider">
+          <hr>
+          <span>Hoặc tiếp tục với</span>
         </div>
 
-        <button type="submit" class="co-btn co-btn-primary w-100 py-2.5 mb-3 fs-6" id="loginBtn">
-          <span id="loginBtnText"><i class="bi bi-box-arrow-in-right me-1"></i> Đăng nhập</span>
-          <span id="loginBtnSpinner" class="spinner-border spinner-border-sm me-2" style="display: none;"></span>
+        <button id="googleLoginBtn" class="co-google-btn w-100">
+          <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" alt="Google" style="width:18px;">
+          Đăng nhập bằng Google
         </button>
-      </form>
-      
-      <!-- Social Login / Google SSO -->
-      <div class="text-center my-4 position-relative">
-        <hr class="text-muted opacity-25">
-        <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small fw-semibold">Hoặc tiếp tục với</span>
+
+        <p class="mt-4 text-center mb-0 small" style="color:var(--co-text-muted);">
+          Chưa có tài khoản? <a href="/auth/register" class="fw-bold text-decoration-none" style="color:var(--co-secondary);">Đăng ký ngay</a>
+        </p>
       </div>
-
-      <button id="googleLoginBtn" class="co-google-btn">
-        <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" alt="Google" style="width: 18px;">
-        Đăng nhập bằng Google
-      </button>
-
-      <!-- Navigation Link -->
-      <p class="mt-4 text-center mb-0 small text-muted">
-        Chưa có tài khoản? <a href="/auth/register" class="fw-bold text-decoration-none" style="color: var(--co-secondary);">Đăng ký ngay</a>
-      </p>
     </div>
-  </main>
 
-  <!-- Footer -->
-  <footer class="co-footer py-4 mt-0 rounded-0">
-    <div class="container text-center">
-      <p class="m-0 text-white-50 small">&copy; 2026 Coffee Store. Tất cả quyền được bảo lưu.</p>
+    <!-- Image Side -->
+    <div class="col-md-6 d-none d-md-flex auth-image-side">
+      <div>
+        <span style="font-size:4rem;">☕</span>
+        <h1 class="mt-3 font-serif">Coffee Store</h1>
+        <p class="mt-2 mb-0">Hương vị cà phê đích thực — bắt đầu ngày mới tràn đầy năng lượng</p>
+      </div>
     </div>
-  </footer>
+  </div>
 
-  <!-- Firebase SDK and Auth Script -->
+  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -109,98 +103,63 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({
-      prompt: 'select_account'
-    });
+    provider.setCustomParameters({ prompt: 'select_account' });
 
     document.getElementById('googleLoginBtn').addEventListener('click', async () => {
       try {
         const result = await signInWithPopup(auth, provider);
         const idToken = await result.user.getIdToken();
-
         const response = await fetch('/auth/google', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ idToken })
         });
-
         const data = await response.json();
         if (response.ok) {
           window.location.href = data.redirectUrl || '/';
         } else {
-          Swal.fire({
-            text: data.message || 'Đăng nhập Google thất bại',
-            icon: 'error',
-            confirmButtonColor: '#5c3e35'
-          });
+          Swal.fire({ text: data.message || 'Đăng nhập Google thất bại', icon: 'error', confirmButtonColor: '#4A2C2A' });
         }
       } catch (error) {
-        console.error("Google login error:", error);
-        Swal.fire({
-          text: "Lỗi khi đăng nhập bằng Google: " + error.message,
-          icon: 'error',
-          confirmButtonColor: '#5c3e35'
-        });
+        Swal.fire({ text: "Lỗi: " + error.message, icon: 'error', confirmButtonColor: '#4A2C2A' });
       }
     });
   </script>
-  <!-- Bootstrap 5 JS -->
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Toggle password visibility
     document.getElementById('togglePassword').addEventListener('click', function() {
-      const passwordInput = document.getElementById('password');
+      const input = document.getElementById('password');
       const icon = this.querySelector('i');
-      if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        icon.classList.replace('bi-eye', 'bi-eye-slash');
-      } else {
-        passwordInput.type = 'password';
-        icon.classList.replace('bi-eye-slash', 'bi-eye');
-      }
+      input.type = input.type === 'password' ? 'text' : 'password';
+      icon.classList.toggle('bi-eye');
+      icon.classList.toggle('bi-eye-slash');
     });
 
-    // Form validation with loading state
     document.getElementById('loginForm').addEventListener('submit', function(e) {
       const username = document.getElementById('username');
       const password = document.getElementById('password');
       let valid = true;
 
-      if (username.value.length < 3) {
-        username.classList.add('is-invalid');
-        valid = false;
-      } else {
-        username.classList.remove('is-invalid');
-      }
+      if (username.value.length < 3) { username.classList.add('is-invalid'); valid = false; }
+      else { username.classList.remove('is-invalid'); }
 
-      if (password.value.length < 6) {
-        password.classList.add('is-invalid');
-        valid = false;
-      } else {
-        password.classList.remove('is-invalid');
-      }
+      if (password.value.length < 6) { password.classList.add('is-invalid'); valid = false; }
+      else { password.classList.remove('is-invalid'); }
 
-      if (!valid) {
-        e.preventDefault();
-        return;
-      }
+      if (!valid) { e.preventDefault(); return; }
 
-      // Show loading state
       const btn = document.getElementById('loginBtn');
-      const btnText = document.getElementById('loginBtnText');
-      const spinner = document.getElementById('loginBtnSpinner');
       btn.disabled = true;
-      btnText.style.display = 'none';
-      spinner.style.display = 'inline-block';
+      document.getElementById('loginBtnText').style.display = 'none';
+      document.getElementById('loginBtnSpinner').style.display = 'inline-block';
       btn.classList.add('opacity-75');
     });
 
-    // Clear invalid on input
     document.querySelectorAll('#loginForm input').forEach(input => {
       input.addEventListener('input', () => input.classList.remove('is-invalid'));
     });
   </script>
+  <script src="/client-logger.js"></script>
 </body>
 </html>

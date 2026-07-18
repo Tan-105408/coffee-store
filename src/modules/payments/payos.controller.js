@@ -151,7 +151,7 @@ const cancelPayOSPayment = asyncHandler(async (req, res) => {
 
     const paymentDetails = await payOSService.getPaymentDetails(orderId);
 
-    if (paymentDetails.status === "COMPLETED") {
+    if (paymentDetails.status === "completed") {
       throw new ApiError(400, "Cannot cancel completed payment");
     }
 

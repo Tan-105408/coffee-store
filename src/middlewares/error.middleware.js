@@ -12,7 +12,9 @@ const errorHandler = (err, req, res, next) => {
 
   // Redirect browser on auth/role errors instead of showing error page
   if ((statusCode === 401 || statusCode === 403) && req.accepts('html')) {
-    const redirectUrl = statusCode === 401 ? '/auth/login' : '/';
+    const redirectUrl = statusCode === 401
+      ? `/auth/login?error=${encodeURIComponent(message)}`
+      : '/';
     return res.redirect(redirectUrl);
   }
 

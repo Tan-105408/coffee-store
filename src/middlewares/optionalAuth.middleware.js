@@ -1,30 +1,14 @@
-const jwt = require("jsonwebtoken");
 const { prisma } = require("../config/db");
 const asyncHandler = require("./asyncHandler");
 
 const optionalAuth = asyncHandler(async (req, res, next) => {
-  let token;
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    token = req.headers.authorization.split(" ")[1];
-  } else if (req.cookies && req.cookies.accessToken) {
-    token = req.cookies.accessToken;
-  }
-
-  if (token) {
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await prisma.user.findUnique({
-        where: { id: parseInt(decoded.id) },
-      });
-      if (user) {
-        req.user = user;
-        res.locals.user = user;
-      }
-    } catch (error) {
-      // Ignore token errors for optional auth
+  if (req.session && req.session.userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(req.session.userId) },
+    });
+    if (user) {
+      req.user = user;
+      res.locals.user = user;
     }
   }
   next();

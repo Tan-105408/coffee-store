@@ -7,3 +7,5 @@ logs
 *.log
 src/config/serviceAccountKey.json
 repomix-output.xml
+.agents
+.claude

@@ -12,6 +12,18 @@ const submitReview = asyncHandler(async (req, res) => {
   res.json({ message: "Review submitted", review });
 });
 
+const checkReviewed = asyncHandler(async (req, res) => {
+  const productIds = req.query.productIds
+    ? req.query.productIds.split(",").map(Number)
+    : [];
+  const reviewedIds = await reviewService.getReviewedProductIds(req.user.id);
+  const result = {};
+  productIds.forEach((id) => {
+    result[id] = reviewedIds.includes(id);
+  });
+  res.json(result);
+});
+
 const getProductReviews = asyncHandler(async (req, res) => {
   const reviews = await reviewService.getReviewsByProductId(req.params.productId);
   res.json(reviews);
@@ -20,4 +32,5 @@ const getProductReviews = asyncHandler(async (req, res) => {
 module.exports = {
   submitReview,
   getProductReviews,
+  checkReviewed,
 };
