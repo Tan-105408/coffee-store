@@ -16,7 +16,9 @@ router.post("/products/add", auth, restrictTo("admin"), adminController.addProdu
 router.post("/products/update/:id", auth, restrictTo("admin"), adminController.updateProduct);
 router.post("/products/delete/:id", auth, restrictTo("admin"), adminController.deleteProduct);
 
-// Order Management
+// Admin voucher management
+router.get("/user-vouchers", auth, restrictTo("admin"), adminController.getUserVouchers);
+router.post("/assign-voucher", auth, restrictTo("admin"), adminController.assignVoucherToUser);
 router.post("/orders/update-status/:id", auth, restrictTo("admin"), adminController.updateOrderStatus);
 router.post("/orders/update-note", auth, restrictTo("admin"), adminController.updateOrderNote);
 router.post("/orders/delete/:id", auth, restrictTo("admin"), adminController.deleteOrder);

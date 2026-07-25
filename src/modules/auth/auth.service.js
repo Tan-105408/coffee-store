@@ -2,8 +2,7 @@ const bcrypt = require("bcryptjs");
 const { prisma } = require("../../config/db");
 const { generateToken } = require("../../utils/jwt");
 const ApiError = require("../../utils/ApiError");
-const firebaseAdminApp = require("../../config/firebase-admin");
-const { getAuth } = require("firebase-admin/auth");
+const admin = require("../../config/firebase-admin");
 
 const register = async (userData) => {
   const { username, email, password } = userData;
@@ -78,8 +77,10 @@ const logout = async (refreshToken) => {
 
 const loginWithGoogle = async (idToken) => {
   try {
-    const auth = getAuth(firebaseAdminApp);
-    const decodedToken = await auth.verifyIdToken(idToken);
+    if (!admin || !admin.apps.length) {
+      throw new Error("Firebase Admin not initialized");
+    }
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
     const { email, name, picture, uid } = decodedToken;
 
     let user = await prisma.user.findUnique({ where: { email } });

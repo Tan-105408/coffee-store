@@ -31,9 +31,88 @@
               </div>
             <% }); %>
           </div>
+
+          <!-- Subtotal + Promo discount -->
+          <div class="d-flex justify-content-between mb-2" style="font-size:0.9rem;">
+            <span style="color:var(--co-text-muted);">Tạm tính:</span>
+            <span><%= (typeof subtotal !== 'undefined' ? subtotal : total).toLocaleString() %>đ</span>
+          </div>
+          <% if (typeof promoDiscount !== 'undefined' && promoDiscount > 0) { %>
+            <div class="d-flex justify-content-between mb-2" style="font-size:0.9rem;color:var(--co-success);">
+              <span><i class="bi bi-percent me-1"></i>Giảm giá KM:</span>
+              <span>-<%= promoDiscount.toLocaleString() %>đ</span>
+            </div>
+          <% } %>
+
+          <!-- Voucher picker — Shopee-style dropdown + confirm -->
+          <div class="my-3" style="background:var(--co-bg);border-radius:var(--co-radius-sm);border:1px solid var(--co-border);">
+            <div class="p-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <a href="javascript:void(0)" onclick="toggleVoucherPanel()" id="voucher-toggle-btn" class="d-flex align-items-center text-decoration-none" style="color:var(--co-text-muted);font-size:0.9rem;">
+                  <i class="bi bi-ticket-perforated me-2"></i>
+                  <% if (typeof voucherApplied !== 'undefined' && voucherApplied) { %>
+                    <span id="voucher-toggle-label">Đã chọn: <code class="fw-bold" style="color:var(--co-secondary);"><%= voucherApplied.code %></code></span>
+                  <% } else { %>
+                    <span id="voucher-toggle-label">Chọn voucher</span>
+                  <% } %>
+                  <i class="bi bi-chevron-down ms-2" id="voucher-chevron" style="transition:transform 0.2s;"></i>
+                </a>
+                <% if (typeof voucherDiscount !== 'undefined' && voucherDiscount > 0) { %>
+                  <a href="javascript:void(0)" onclick="removeVoucher()" style="color:var(--co-danger);font-size:0.8rem;">Bỏ voucher</a>
+                <% } %>
+              </div>
+            </div>
+
+            <!-- Collapsible voucher list -->
+            <div id="voucher-panel" style="display:none;border-top:1px solid var(--co-border);padding:12px;">
+              <% if (typeof userVouchers !== 'undefined' && userVouchers.length > 0) { %>
+                <div class="voucher-list mb-2" style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
+                  <% userVouchers.forEach(uv => { %>
+                    <div class="voucher-card p-2 rounded" data-code="<%= uv.voucher.code %>"
+                      style="cursor:pointer;border:1.5px solid var(--co-border-strong);transition:all 0.15s;"
+                      onclick="pickVoucher(this, '<%= uv.voucher.code %>')">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                          <code class="fw-bold" style="color:var(--co-secondary);font-size:0.85rem;"><%= uv.voucher.code %></code>
+                          <span class="ms-2" style="font-size:0.8rem;color:var(--co-success);font-weight:600;">
+                            <%= uv.voucher.discountType === 'percent' ? `-${uv.voucher.discountValue}%` : `-${uv.voucher.discountValue.toLocaleString()}đ` %>
+                          </span>
+                        </div>
+                        <div class="form-check">
+                          <input class="form-check-input" type="radio" name="_voucherPick" <%= typeof voucherApplied !== 'undefined' && voucherApplied && voucherApplied.code === uv.voucher.code ? 'checked' : '' %>>
+                        </div>
+                      </div>
+                      <small style="color:var(--co-text-muted);font-size:0.72rem;">
+                        <%= uv.voucher.description || '' %>
+                        <% if (uv.voucher.minOrderValue) { %>&middot; Đơn tối thiểu: <%= uv.voucher.minOrderValue.toLocaleString() %>đ<% } %>
+                        <% if (uv.voucher.expiresAt) { %>&middot; HSD: <%= new Date(uv.voucher.expiresAt).toLocaleDateString('vi-VN') %><% } %>
+                      </small>
+                      <% if (uv.isUsed) { %><span class="badge bg-secondary ms-2" style="font-size:0.6rem;">Đã dùng</span><% } %>
+                    </div>
+                  <% }); %>
+                </div>
+                <button type="button" class="co-btn co-btn-primary w-100 py-2 fw-bold" onclick="confirmVoucher()" id="voucher-confirm-btn">
+                  <i class="bi bi-check2-circle me-1"></i> Áp dụng voucher
+                </button>
+              <% } else { %>
+                <small style="color:var(--co-text-muted);">Bạn chưa có voucher nào.</small>
+              <% } %>
+
+              <% if (typeof voucherError !== 'undefined' && voucherError) { %>
+                <small class="text-danger mt-1 d-block"><i class="bi bi-exclamation-circle"></i> <%= voucherError %></small>
+              <% } %>
+            </div>
+
+            <% if (typeof voucherDiscount !== 'undefined' && voucherDiscount > 0) { %>
+              <div class="px-3 pb-3 d-flex justify-content-between" style="font-size:0.88rem;color:var(--co-success);">
+                <span><i class="bi bi-check-circle"></i> Giảm thêm: -<%= voucherDiscount.toLocaleString() %>đ</span>
+              </div>
+            <% } %>
+          </div>
+
           <div class="d-flex justify-content-between border-top pt-3 fw-bold fs-4" style="border-color:var(--co-border) !important;color:var(--co-success);">
             <span>Tổng cộng:</span>
-            <span><%= total.toLocaleString() %>đ</span>
+            <span><%= (typeof voucherDiscount !== 'undefined' ? (total - voucherDiscount) : total).toLocaleString() %>đ</span>
           </div>
         </div>
       </div>
@@ -42,6 +121,9 @@
       <div class="col-lg-7 order-lg-1">
         <div class="co-detail-card p-4">
           <form action="/checkout" method="POST" id="checkout-form">
+            <!-- Hidden input for voucher code -->
+            <input type="hidden" name="voucherCode" id="hiddenVoucherCode" value="<%= typeof voucherApplied !== 'undefined' && voucherApplied ? voucherApplied.code : '' %>">
+            <input type="hidden" name="action" id="hiddenAction" value="checkout">
             <h5 class="font-serif fw-bold mb-4">Thông tin giao hàng</h5>
 
             <div class="mb-4">
@@ -84,5 +166,53 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/client-logger.js"></script>
+  <script>
+    let _pickedVoucherCode = '<%= typeof voucherApplied !== 'undefined' && voucherApplied ? voucherApplied.code : '' %>' || null;
+
+    function toggleVoucherPanel() {
+      const panel = document.getElementById('voucher-panel');
+      const chevron = document.getElementById('voucher-chevron');
+      if (panel.style.display === 'none' || panel.style.display === '') {
+        panel.style.display = 'block';
+        chevron.style.transform = 'rotate(180deg)';
+      } else {
+        panel.style.display = 'none';
+        chevron.style.transform = 'rotate(0deg)';
+      }
+    }
+
+    // Select a voucher card visually (no submit)
+    function pickVoucher(el, code) {
+      // un-highlight all
+      document.querySelectorAll('.voucher-card').forEach(c => {
+        c.style.borderColor = 'var(--co-border-strong)';
+        c.style.background = 'transparent';
+        c.querySelector('.form-check-input').checked = false;
+      });
+      // highlight picked
+      el.style.borderColor = 'var(--co-success)';
+      el.style.background = 'rgba(61,139,110,0.06)';
+      el.querySelector('.form-check-input').checked = true;
+      _pickedVoucherCode = code;
+    }
+
+    // Confirm voucher — submit with action=apply_voucher
+    function confirmVoucher() {
+      if (!_pickedVoucherCode) {
+        Swal.fire({ icon: 'warning', text: 'Vui lòng chọn một voucher.' });
+        return;
+      }
+      document.getElementById('hiddenVoucherCode').value = _pickedVoucherCode;
+      document.getElementById('hiddenAction').value = 'apply_voucher';
+      document.getElementById('checkout-form').submit();
+    }
+
+    // Remove voucher — submit with action=remove_voucher
+    function removeVoucher() {
+      document.getElementById('hiddenVoucherCode').value = '';
+      document.getElementById('hiddenAction').value = 'remove_voucher';
+      document.getElementById('checkout-form').submit();
+    }
+  </script>
 </body>
 </html>

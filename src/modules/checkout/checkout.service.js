@@ -1,11 +1,28 @@
-const { prisma } = require("../../config/db");
+﻿const { prisma } = require("../../config/db");
+const { getActivePromotions, calculateDiscount } = require("../promotions/promotions.service");
+const { validateVoucher, applyVoucher, redeemVoucher, checkAutoAssignment } = require("../vouchers/vouchers.service");
+const logger = require("../../utils/logger");
 
-const createOrder = async (userId, totalAmount, paymentMethod, cartItems) => {
+const createOrder = async (userId, totalAmount, paymentMethod, cartItems, voucherCode = null, voucherDiscount = 0) => {
+  // BUG FIX: totalAmount from controller is already after voucher discount (controller subtracts it)
+  // Do NOT subtract voucherDiscount again — that would double-discount
+  const finalAmount = parseFloat(totalAmount.toFixed(2));
+
+  logger.info("voucher.order.create", "Creating order", {
+    userId,
+    totalAmount,
+    voucherDiscount,
+    finalAmount,
+    voucherCode,
+  });
+
   const order = await prisma.order.create({
     data: {
       userId: parseInt(userId),
-      totalAmount: parseFloat(totalAmount),
+      totalAmount: finalAmount,
       paymentMethod,
+      status: paymentMethod === 'cash' ? 'completed' : 'pending',
+      paymentStatus: paymentMethod === 'cash' ? 'completed' : 'pending',
       orderItems: {
         create: cartItems.map((item) => ({
           productId: item.productId,
@@ -16,6 +33,29 @@ const createOrder = async (userId, totalAmount, paymentMethod, cartItems) => {
       },
     },
   });
+
+  // Handle voucher redemption if applied
+  // BUG FIX: re-validate with the ORIGINAL total (before voucher discount) for minOrderValue check
+  if (voucherCode && voucherDiscount > 0) {
+    const originalTotal = finalAmount + voucherDiscount;
+    const validation = await validateVoucher(voucherCode, userId, originalTotal);
+    if (validation.valid) {
+      logger.info("voucher.redeem", "Redeeming voucher", {
+        userId,
+        voucherId: validation.voucher.id,
+        code: voucherCode,
+        orderId: order.id,
+      });
+      await redeemVoucher(userId, validation.voucher.id);
+    } else {
+      logger.warn("voucher.redeem.failed", "Voucher re-validation failed on redeem", {
+        userId,
+        code: voucherCode,
+        error: validation.error,
+        orderId: order.id,
+      });
+    }
+  }
   return order;
 };
 
@@ -32,7 +72,7 @@ const getCheckoutData = async (userId) => {
   });
 
   if (!cart || !cart.items || cart.items.length === 0) {
-    return { cartItems: [], total: 0 };
+    return { cartItems: [], total: 0, promoDiscount: 0, freeItems: [] };
   }
 
   const cartItems = cart.items.map((item) => {
@@ -53,8 +93,25 @@ const getCheckoutData = async (userId) => {
       total: parseFloat((unitPrice * item.quantity || 0).toFixed(2)),
     };
   });
-  const total = parseFloat(cartItems.reduce((sum, item) => sum + item.total, 0).toFixed(2));
-  return { cartItems, total };
+
+  const subtotal = parseFloat(cartItems.reduce((sum, item) => sum + item.total, 0).toFixed(2));
+
+  // Apply promotions
+  const promotions = await getActivePromotions();
+  const { discountAmount: promoDiscount, freeItems } = calculateDiscount(cartItems, promotions);
+
+  // Combine cart items with free items for display
+  const allItems = [...cartItems, ...freeItems];
+
+  // Total after promo
+  const totalAfterPromo = parseFloat((subtotal - promoDiscount).toFixed(2));
+
+  return {
+    cartItems: allItems,
+    subtotal,
+    promoDiscount,
+    total: totalAfterPromo
+  };
 };
 
 const clearCart = async (userId) => {
@@ -68,8 +125,5 @@ const clearCart = async (userId) => {
   }
 };
 
-module.exports = {
-  getCheckoutData,
-  clearCart,
-  createOrder,
-};
+module.exports = { getCheckoutData, clearCart, createOrder };
+

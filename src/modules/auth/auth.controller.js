@@ -44,7 +44,9 @@ const getRegister = (req, res) => {
 };
 
 const getProfile = asyncHandler(async (req, res) => {
-  res.render("profile", { user: req.user });
+  const { getUserVouchers } = require("../vouchers/vouchers.service");
+  const userVouchers = await getUserVouchers(req.user.id);
+  res.render("profile", { user: req.user, userVouchers });
 });
 
 const getForgotPassword = (req, res) => {

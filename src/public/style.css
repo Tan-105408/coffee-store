@@ -542,6 +542,35 @@ img {
   box-shadow: 0 2px 8px rgba(74, 44, 42, 0.2);
 }
 
+/* Category divider between category chips and rating chips */
+.co-category-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--co-border-strong);
+  align-self: center;
+  margin: 0 4px;
+}
+
+/* Rating filter chips */
+.co-rating-chip {
+  border-style: dashed;
+}
+
+/* Star rating display on product cards */
+.co-rating-display .bi-star-fill,
+.co-rating-display .bi-star-half {
+  font-size: 0.82rem;
+}
+
+.co-rating-display .bi-star {
+  font-size: 0.82rem;
+}
+
+.co-rating-display .small {
+  font-size: 0.75rem;
+  letter-spacing: -0.01em;
+}
+
 /* ══════════════════════════════════════════════════════════════════════════
    FORM CONTROLS — override Bootstrap form styles
    ══════════════════════════════════════════════════════════════════════════ */

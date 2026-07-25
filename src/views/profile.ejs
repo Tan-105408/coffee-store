@@ -59,6 +59,11 @@
                 <i class="bi bi-shield-lock me-2"></i>Bảo mật
               </button>
             </li>
+            <li class="nav-item">
+              <button class="nav-link" data-bs-toggle="tab" data-bs-target="#myVouchers">
+                <i class="bi bi-ticket-perforated me-2"></i>Voucher
+              </button>
+            </li>
           </ul>
 
           <div class="tab-content p-4">
@@ -116,6 +121,43 @@
                   </div>
                 <% } %>
               </div>
+            </div>
+
+            <!-- Voucher Tab -->
+            <div class="tab-pane fade" id="myVouchers">
+              <h6 class="fw-bold mb-3"><i class="bi bi-ticket-perforated me-2" style="color:var(--co-secondary)"></i>Voucher của tôi</h6>
+              <% var _uv = typeof userVouchers !== 'undefined' ? userVouchers : []; %>
+              <% if (_uv.length === 0) { %>
+                <div class="text-center py-4" style="color:var(--co-text-muted);">
+                  <i class="bi bi-ticket" style="font-size:2.5rem;opacity:0.3;"></i>
+                  <p class="mt-2">Bạn chưa có voucher nào</p>
+                </div>
+              <% } else { %>
+                <div class="row g-3">
+                  <% _uv.forEach(uv => { %>
+                    <div class="col-sm-6">
+                      <div class="p-3" style="border:1px solid var(--co-border);border-radius:var(--co-radius);background:<%= uv.isUsed ? 'var(--co-bg)' : 'rgba(200,149,108,0.04)' %>;">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                          <code class="fw-bold" style="font-size:1rem;color:var(--co-secondary);"><%= uv.voucher.code %></code>
+                          <span class="badge" style="background:<%= uv.isUsed ? 'rgba(0,0,0,0.1)' : 'rgba(61,139,110,0.12)' %>;color:<%= uv.isUsed ? 'var(--co-text-muted)' : 'var(--co-success)' %>;">
+                            <%= uv.isUsed ? 'Đã dùng' : 'Chưa dùng' %>
+                          </span>
+                        </div>
+                        <p class="small mb-1" style="color:var(--co-text-muted);"><%= uv.voucher.description || '' %></p>
+                        <p class="fw-bold mb-0" style="font-size:0.95rem;">
+                          <%= uv.voucher.discountType === 'percent' ? `Giảm ${uv.voucher.discountValue}%` : `Giảm ${uv.voucher.discountValue.toLocaleString()}đ` %>
+                        </p>
+                        <% if (uv.voucher.minOrderValue) { %>
+                          <small style="color:var(--co-text-muted);">Đơn tối thiểu: <%= uv.voucher.minOrderValue.toLocaleString() %>đ</small>
+                        <% } %>
+                        <% if (uv.voucher.expiresAt) { %>
+                          <br><small style="color:var(--co-text-muted);">HSD: <%= new Date(uv.voucher.expiresAt).toLocaleDateString('vi-VN') %></small>
+                        <% } %>
+                      </div>
+                    </div>
+                  <% }); %>
+                </div>
+              <% } %>
             </div>
           </div>
         </div>

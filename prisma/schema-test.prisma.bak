@@ -1,19 +1,16 @@
-// This is your Prisma schema file
 generator client {
   provider = "prisma-client-js"
 }
-
 datasource db {
   provider = "sqlserver"
   url      = env("DATABASE_URL")
 }
-
 model User {
   id            Int            @id @default(autoincrement())
   username      String
   email         String         @unique
   password      String?
-  role          String         @default("user") // Role: user | admin
+  role          String         @default("user")
   isActive      Boolean        @default(true)
   googleId      String?        @unique
   address       String?        @db.NVarChar(Max)
@@ -24,32 +21,25 @@ model User {
   orders        Order[]
   refreshTokens RefreshToken[]
   userVouchers  UserVoucher[]
-
-  @@index([role])
 }
-
 model Product {
-  id                Int         @id @default(autoincrement())
+  id                Int      @id @default(autoincrement())
   name              String
   price             Float
   image             String
-  description       String?     @db.NVarChar(Max)
-  category          String      @default("Cà phê")
-  discount          Int         @default(0)
-  isBestSeller      Boolean     @default(false)
-  bestSellerOverride Boolean?   // null=auto, true=forced on, false=forced off
-  bestSellerReason  String?     @db.NVarChar(500)
-  promoTag          String?     @db.NVarChar(100)
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  description       String?  @db.NVarChar(Max)
+  category          String   @default("Cà phê")
+  discount          Int      @default(0)
+  isBestSeller      Boolean  @default(false)
+  bestSellerOverride Boolean?
+  bestSellerReason  String?  @db.NVarChar(500)
+  promoTag          String?  @db.NVarChar(100)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
   reviews           Review[]
   cartItems         CartItem[]
   orderItems        OrderItem[]
-
-  @@index([category])
-  @@index([isBestSeller])
 }
-
 model Cart {
   id        Int        @id @default(autoincrement())
   userId    Int
@@ -57,10 +47,7 @@ model Cart {
   items     CartItem[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-
-  @@index([userId])
 }
-
 model CartItem {
   id        Int     @id @default(autoincrement())
   cartId    Int
@@ -68,13 +55,8 @@ model CartItem {
   productId Int
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   quantity  Int     @default(1)
-  options   String?  @db.NVarChar(Max) // JSON: { size: "L", sugar: "50%", ice: "normal", toppings: [] }
-
-  @@index([cartId])
-  @@index([productId])
-  // @@index([cartId, productId, options]) — NVarChar(Max) not indexable by SQL Server
+  options   String? @db.NVarChar(Max)
 }
-
 model RefreshToken {
   id        Int      @id @default(autoincrement())
   token     String   @unique
@@ -82,11 +64,7 @@ model RefreshToken {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
-
-  @@index([userId])
-  @@index([expiresAt])
 }
-
 model Review {
   id        Int      @id @default(autoincrement())
   userId    Int
@@ -94,25 +72,17 @@ model Review {
   productId Int
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   rating    Int
-  orderId   Int
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   comment   String?  @db.NVarChar(Max)
   createdAt DateTime @default(now())
-
-  @@index([userId])
-  @@index([productId])
-  @@index([orderId])
-  @@unique([userId, productId, orderId]) // one review per product per order
 }
-
 model PaymentTransaction {
   id            Int      @id @default(autoincrement())
   orderId       Int
   order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderCode     String?  @unique // PayOS orderCode (Date.now() as string)
-  provider      String   // PaymentMethod: cash | vnpay | payos
-  status        String   @default("pending") // TransactionStatus: pending | processing | completed | failed | cancelled
-  transactionId String?  // Payment gateway transaction ID
+  orderCode     String?  @unique
+  provider      String
+  status        String   @default("pending")
+  transactionId String?
   amount        Float
   currency      String   @default("VND")
   errorCode     String?
@@ -120,20 +90,15 @@ model PaymentTransaction {
   paidAt        DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-
-  @@index([orderId])
-  @@index([orderCode])
-  @@index([provider, status])
 }
-
 model Order {
   id                Int       @id @default(autoincrement())
   userId            Int
   user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   totalAmount       Float
-  status            String    @default("pending") // OrderStatus: pending | processing | completed | cancelled
-  paymentMethod     String    @default("cash") // PaymentMethod: cash | vnpay | payos
-  paymentStatus     String    @default("pending") // PaymentStatus: pending | processing | completed | failed
+  status            String    @default("pending")
+  paymentMethod     String    @default("cash")
+  paymentStatus     String    @default("pending")
   paymentTimestamp  DateTime?
   paymentTransactions PaymentTransaction[]
   deliveryAddress   String?   @db.NVarChar(Max)
@@ -141,16 +106,9 @@ model Order {
   estimatedReadyTime DateTime?
   note              String?   @db.NVarChar(Max)
   orderItems        OrderItem[]
-  reviews           Review[]
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
-
-  @@index([userId])
-  @@index([status])
-  @@index([paymentStatus])
-  @@index([createdAt])
 }
-
 model OrderItem {
   id              Int     @id @default(autoincrement())
   orderId         Int
@@ -159,42 +117,36 @@ model OrderItem {
   product         Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   quantity        Int
   priceAtPurchase Float
-  options         String?  @db.NVarChar(Max) // JSON: { size: "L", sugar: "50%", ice: "normal", toppings: [] }
-
-  @@index([orderId])
-  @@index([productId])
+  options         String? @db.NVarChar(Max)
 }
-
 model SiteSetting {
   id    Int    @id @default(autoincrement())
   key   String @unique
   value String @db.NVarChar(Max)
 }
-
 model Promotion {
   id            Int       @id @default(autoincrement())
   name          String
-  type          String    // PromotionType: buyXGetY | percentOff | freeItem
-  buyQuantity   Int?      // buyXGetY: mua N
-  getQuantity   Int?      // buyXGetY: đc M
-  minQuantity   Int?      // percentOff/freeItem: đơn tối thiểu N sp
-  discount      Float?    // percentOff: giảm X%
-  freeProductId Int?      // freeItem: sp tặng
+  type          String
+  buyQuantity   Int?
+  getQuantity   Int?
+  minQuantity   Int?
+  discount      Float?
+  freeProductId Int?
   isActive      Boolean   @default(true)
   startDate     DateTime?
   endDate       DateTime?
   createdAt     DateTime  @default(now())
 }
-
 model Voucher {
   id            Int       @id @default(autoincrement())
   code          String    @unique
   description   String?   @db.NVarChar(500)
-  discountType  String    // VoucherDiscountType: percent | fixed
-  discountValue Float     // percent: 0-100, fixed: số tiền
-  minOrderValue Float?    // đơn tối thiểu
-  maxDiscount   Float?    // giảm tối đa (cho percent)
-  usageLimit    Int?      // số lần dùng tối đa (null = vô hạn)
+  discountType  String
+  discountValue Float
+  minOrderValue Float?
+  maxDiscount   Float?
+  usageLimit    Int?
   usedCount     Int       @default(0)
   isActive      Boolean   @default(true)
   expiresAt     DateTime?
@@ -202,7 +154,6 @@ model Voucher {
   userVouchers  UserVoucher[]
   voucherRules  VoucherRule[]
 }
-
 model UserVoucher {
   id        Int      @id @default(autoincrement())
   userId    Int
@@ -212,17 +163,12 @@ model UserVoucher {
   isUsed    Boolean  @default(false)
   usedAt    DateTime?
   createdAt DateTime @default(now())
-
-  @@unique([userId, voucherId])
-  @@index([userId, voucherId])
-  @@index([userId])
 }
-
 model VoucherRule {
   id          Int      @id @default(autoincrement())
   name        String
-  triggerType String   // VoucherTriggerType: totalSpend | orderCount | specificProduct
-  threshold   Float    // totalSpend: VNĐ, orderCount: số đơn
+  triggerType String
+  threshold   Float
   voucherId   Int
   voucher     Voucher  @relation(fields: [voucherId], references: [id], onDelete: Cascade)
   isActive    Boolean  @default(true)

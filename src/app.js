@@ -49,11 +49,16 @@ app.use("/payment/payos", require("./modules/payments/payos.routes"));
 app.use("/order", require("./modules/orders/orders.routes"));
 app.use("/review", require("./modules/reviews/reviews.routes"));
 
+app.use("/admin/bestseller", require("./modules/bestseller/bestseller.routes"));
+app.use("/admin/promotions", require("./modules/promotions/promotions.routes"));
+app.use("/admin/vouchers", require("./modules/vouchers/vouchers.routes"));
+app.use("/admin/voucher-rules", require("./modules/vouchers/voucher-rules.routes"));
+
 app.use("/admin", require("./modules/admin/admin.routes"));
 
 // Root route (Home)
 app.get("/", optionalAuth, async (req, res) => {
-  const { search, category, minPrice, maxPrice } = req.query;
+  const { search, category, minPrice, maxPrice, rating } = req.query;
   const page = Math.max(1, parseInt(req.query.page) || 1);
   const limit = 8;
 
@@ -79,7 +84,60 @@ app.get("/", optionalAuth, async (req, res) => {
       );
     }
 
-    // Phân trang
+    // Aggregate review stats per product (avg rating + count)
+    const productIds = products.map(p => p.id);
+    let reviewStats = {};
+    let soldCounts = {};
+    if (productIds.length > 0) {
+      const stats = await prisma.review.groupBy({
+        by: ['productId'],
+        where: { productId: { in: productIds } },
+        _avg: { rating: true },
+        _count: { rating: true },
+      });
+      stats.forEach(s => {
+        reviewStats[s.productId] = {
+          avgRating: Math.round((s._avg.rating || 0) * 10) / 10,
+          reviewCount: s._count.rating,
+        };
+      });
+
+      // Aggregate sold count from non-cancelled orders (pending, processing, completed)
+      const soldRows = await prisma.orderItem.groupBy({
+        by: ['productId'],
+        where: {
+          productId: { in: productIds },
+          order: { status: { not: 'cancelled' } },
+        },
+        _sum: { quantity: true },
+      });
+      soldRows.forEach(s => {
+        soldCounts[s.productId] = s._sum.quantity || 0;
+      });
+    }
+
+    // Filter by rating if specified
+    if (rating === 'high') {
+      products = products.filter(p => {
+        const avg = reviewStats[p.id]?.avgRating || 0;
+        return avg >= 4;
+      });
+    } else if (rating === 'low') {
+      products = products.filter(p => {
+        const avg = reviewStats[p.id]?.avgRating || 0;
+        return avg > 0 && avg <= 2;
+      });
+    }
+
+    // Attach review stats & sold count to products and sort by avg rating (desc)
+    products.forEach(p => {
+      p.avgRating = reviewStats[p.id]?.avgRating || 0;
+      p.reviewCount = reviewStats[p.id]?.reviewCount || 0;
+      p.soldCount = soldCounts[p.id] || 0;
+    });
+    products.sort((a, b) => b.avgRating - a.avgRating || b.reviewCount - a.reviewCount);
+
+    // Phân trang (sau khi sort)
     const totalProducts = products.length;
     const totalPages = Math.ceil(totalProducts / limit);
     const offset = (page - 1) * limit;
@@ -89,6 +147,41 @@ app.get("/", optionalAuth, async (req, res) => {
     const bestSellers = (!search && !category && !minPrice && !maxPrice)
       ? await prisma.product.findMany({ where: { isBestSeller: true }, take: 8 })
       : [];
+    // Attach review stats to best sellers
+    if (bestSellers.length > 0) {
+      const bsIds = bestSellers.map(p => p.id);
+      const bsStats = await prisma.review.groupBy({
+        by: ['productId'],
+        where: { productId: { in: bsIds } },
+        _avg: { rating: true },
+        _count: { rating: true },
+      });
+      const bsMap = {};
+      bsStats.forEach(s => {
+        bsMap[s.productId] = {
+          avgRating: Math.round((s._avg.rating || 0) * 10) / 10,
+          reviewCount: s._count.rating,
+        };
+      });
+      bestSellers.forEach(p => {
+        p.avgRating = bsMap[p.id]?.avgRating || 0;
+        p.reviewCount = bsMap[p.id]?.reviewCount || 0;
+      });
+      // Aggregate sold count for best sellers (non-cancelled orders)
+      const bsSoldRows = await prisma.orderItem.groupBy({
+        by: ['productId'],
+        where: {
+          productId: { in: bsIds },
+          order: { status: { not: 'cancelled' } },
+        },
+        _sum: { quantity: true },
+      });
+      const bsSoldMap = {};
+      bsSoldRows.forEach(s => { bsSoldMap[s.productId] = s._sum.quantity || 0; });
+      bestSellers.forEach(p => {
+        p.soldCount = bsSoldMap[p.id] || 0;
+      });
+    }
     // Promo products (Coffee for Life etc.)
     const promoProducts = (!search && !category && !minPrice && !maxPrice)
       ? await prisma.product.findMany({ where: { promoTag: { not: null } }, take: 5 })
@@ -100,6 +193,7 @@ app.get("/", optionalAuth, async (req, res) => {
     if (category) queryParams.set('category', category);
     if (minPrice) queryParams.set('minPrice', minPrice);
     if (maxPrice) queryParams.set('maxPrice', maxPrice);
+    if (rating) queryParams.set('rating', rating);
     const baseQuery = queryParams.toString();
 
     res.render("home", {
@@ -112,6 +206,7 @@ app.get("/", optionalAuth, async (req, res) => {
       maxPrice,
       user: res.locals.user || null,
       payment: req.query.payment || null,
+      rating: rating || '',
       currentPage: page,
       totalPages,
       totalProducts,

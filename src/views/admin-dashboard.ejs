@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi" data-theme="light">
 <head>
   <meta charset="UTF-8">
@@ -253,6 +253,12 @@
         <a class="nav-link" href="#" data-section="products"><i class="bi bi-box-seam"></i>Sản phẩm</a>
         <a class="nav-link" href="#" data-section="users"><i class="bi bi-people"></i>Người dùng</a>
         <a class="nav-link" href="#" data-section="orders"><i class="bi bi-bag"></i>Đơn hàng</a>
+        <div class="border-top my-2 mx-3" style="border-color:rgba(255,255,255,0.08) !important"></div>
+        <a class="nav-link" href="#" data-section="bestseller-settings"><i class="bi bi-star"></i>Best Seller</a>
+        <a class="nav-link" href="#" data-section="promotions"><i class="bi bi-percent"></i>Khuyến mãi</a>
+        <a class="nav-link" href="#" data-section="vouchers"><i class="bi bi-ticket-perforated"></i>Voucher</a>
+        <a class="nav-link" href="#" data-section="voucher-rules"><i class="bi bi-gift"></i>Quy tắc Voucher</a>
+	        <a class="nav-link" href="#" data-section="user-vouchers"><i class="bi bi-people-fill"></i>Voucher User</a>
       </nav>
       <div class="mt-auto p-3 border-top" style="border-color: rgba(255,255,255,0.08) !important;">
         <a href="/" class="nav-link d-block"><i class="bi bi-house"></i>Về trang chủ</a>
@@ -546,7 +552,7 @@
                 <thead>
                   <tr>
                     <th>Mã đơn</th><th>Khách hàng</th><th>Tổng</th><th>Trạng thái</th>
-                    <th>Thanh toán</th><th>Thời gian</th><th class="text-end">Thao tác</th>
+                    <th>Thanh toán</th><th>Thời gian</th><th style="min-width:100px;">⏱ Chờ</th><th class="text-end">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -598,6 +604,11 @@
                             <div><small style="color:var(--co-warning);font-size:0.72rem;" title="<%= order.note %>"><i class="bi bi-info-circle me-1"></i>Ghi chú</small></div>
                           <% } %>
                         </td>
+                        <td>
+                          <div class="order-timer" data-created="<%= new Date(order.createdAt).toISOString() %>" data-status="<%= order.status %>" style="font-size:0.82rem;font-weight:600;min-width:80px;">
+                            <span class="timer-value">--</span>
+                          </div>
+                        </td>
                         <td class="text-end">
                           <div class="d-flex gap-1 justify-content-end">
                             <button class="btn btn-sm" style="background:rgba(139,111,94,0.12);color:var(--co-primary-light);border:none;"
@@ -630,9 +641,143 @@
             </div>
           </div>
         </div>
+      </section><!-- /orders -->
+
+      <!-- ═══════ BEST SELLER ═══════ -->
+      <section class="admin-section" id="section-bestseller-settings">
+        <div class="admin-card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-star me-2" style="color:var(--co-warning)"></i>Cấu hình Best Seller</h5>
+          </div>
+          <div class="card-body p-4">
+            <form id="bestsellerForm" class="row g-3 align-items-end">
+              <div class="col-md-4">
+                <label class="form-label" style="font-size:0.85rem;">Đánh giá tối thiểu (★)</label>
+                <input type="number" step="0.1" min="0" max="5" name="minRating" id="bsMinRating" class="form-control" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" style="font-size:0.85rem;">Số đánh giá tối thiểu</label>
+                <input type="number" min="0" name="minReviews" id="bsMinReviews" class="form-control" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+              </div>
+              <div class="col-md-4">
+                <button type="submit" class="btn" style="background:var(--co-primary);color:#fff;border-radius:var(--co-radius-sm);">
+                  <i class="bi bi-gear me-1"></i>Lưu &amp; Tính lại
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <div class="admin-card">
+          <div class="card-header">
+            <h5 class="mb-0 fw-bold" style="font-size:0.9rem;"><i class="bi bi-box-seam me-2" style="color:var(--co-secondary)"></i>Danh sách sản phẩm</h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table admin-table">
+                <thead><tr><th>Tên sản phẩm</th><th>Trạng thái</th><th>Override</th><th>Lý do</th></tr></thead>
+                <tbody id="bsProductBody">
+                  <tr><td colspan="4"><div class="empty-state"><i class="bi bi-star"></i><p>Đang tải...</p></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </section>
-    </div>
-  </div>
+
+      <!-- ═══════ PROMOTIONS ═══════ -->
+      <section class="admin-section" id="section-promotions">
+        <div class="admin-card">
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-percent me-2" style="color:var(--co-secondary)"></i>Quản lý Khuyến mãi</h5>
+            <button class="btn btn-sm" style="background:var(--co-primary);color:#fff;border-radius:var(--co-radius-sm);" data-bs-toggle="modal" data-bs-target="#addPromoModal">
+              <i class="bi bi-plus-lg"></i> Thêm KM
+            </button>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table admin-table">
+                <thead><tr><th>Tên</th><th>Loại</th><th>Chi tiết</th><th>Trạng thái</th><th class="text-end">Hành động</th></tr></thead>
+                <tbody id="promotionsBody">
+                  <tr><td colspan="5"><div class="empty-state"><i class="bi bi-percent"></i><p>Đang tải...</p></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════ VOUCHERS ═══════ -->
+      <section class="admin-section" id="section-vouchers">
+        <div class="admin-card">
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-ticket-perforated me-2" style="color:var(--co-secondary)"></i>Quản lý Voucher</h5>
+            <button class="btn btn-sm" style="background:var(--co-primary);color:#fff;border-radius:var(--co-radius-sm);" data-bs-toggle="modal" data-bs-target="#addVoucherModal">
+              <i class="bi bi-plus-lg"></i> Thêm Voucher
+            </button>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table admin-table">
+                <thead><tr><th>Mã</th><th>Mô tả</th><th>Giảm</th><th>Đã dùng</th><th>HSD</th><th>Trạng thái</th><th class="text-end">Hành động</th></tr></thead>
+                <tbody id="vouchersBody">
+                  <tr><td colspan="7"><div class="empty-state"><i class="bi bi-ticket-perforated"></i><p>Đang tải...</p></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════ VOUCHER RULES ═══════ -->
+      <section class="admin-section" id="section-voucher-rules">
+        <div class="admin-card">
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-gift me-2" style="color:var(--co-secondary)"></i>Quy tắc Voucher tự động</h5>
+            <button class="btn btn-sm" style="background:var(--co-primary);color:#fff;border-radius:var(--co-radius-sm);" data-bs-toggle="modal" data-bs-target="#addVoucherRuleModal">
+              <i class="bi bi-plus-lg"></i> Thêm quy tắc
+            </button>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table admin-table">
+                <thead><tr><th>Tên</th><th>Điều kiện</th><th>Voucher</th><th>Trạng thái</th><th class="text-end">Hành động</th></tr></thead>
+                <tbody id="voucherRulesBody">
+                  <tr><td colspan="5"><div class="empty-state"><i class="bi bi-gift"></i><p>Đang tải...</p></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    
+	      <!-- ═══════ USER VOUCHERS ═══════ -->
+	      <section class="admin-section" id="section-user-vouchers">
+	        <div class="admin-card">
+	          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+	            <h5 class="mb-0 fw-bold"><i class="bi bi-people-fill me-2" style="color:var(--co-secondary)"></i>Voucher người dùng</h5>
+	            <div class="d-flex gap-2">
+	              <input type="text" class="admin-search" placeholder="Tìm user..." id="uvSearch">
+	              <button class="btn btn-sm" style="background:var(--co-primary);color:#fff;border-radius:var(--co-radius-sm);" data-bs-toggle="modal" data-bs-target="#assignVoucherModal">
+	                <i class="bi bi-plus-lg"></i> Gán voucher
+	              </button>
+	            </div>
+	          </div>
+	          <div class="card-body">
+	            <div class="table-responsive">
+	              <table class="table admin-table">
+	                <thead><tr><th>Người dùng</th><th>Email</th><th>Voucher</th><th>Giảm</th><th>Trạng thái</th><th>Ngày nhận</th><th class="text-end">HSD</th></tr></thead>
+	                <tbody id="userVouchersBody">
+	                  <tr><td colspan="7"><div class="empty-state"><i class="bi bi-ticket-perforated"></i><p>Đang tải...</p></div></td></tr>
+	                </tbody>
+	              </table>
+	            </div>
+	          </div>
+	        </div>
+	      </section>
+
+	    </div><!-- /admin-main -->
+  </div><!-- /admin-wrap -->
 
   <!-- ═══════ MODALS ═══════ -->
 
@@ -826,6 +971,216 @@
     </div>
   </div>
 
+  <!-- ═══════ ADD PROMO MODAL ═══════ -->
+  <div class="modal fade" id="addPromoModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header" style="background:var(--co-primary-dark);color:#fff;border-radius:var(--co-radius) var(--co-radius) 0 0;">
+          <h5 class="modal-title" style="font-size:1rem;"><i class="bi bi-plus-circle me-2"></i>Thêm khuyến mãi</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <form action="/admin/promotions" method="POST">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label" style="font-size:0.85rem;">Tên chương trình</label>
+              <input type="text" name="name" class="form-control" required style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+            </div>
+            <div class="mb-3">
+              <label class="form-label" style="font-size:0.85rem;">Loại</label>
+              <select name="type" class="form-select" id="promoType" required style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+                <option value="percentOff">Giảm % đơn hàng</option>
+                <option value="buyXGetY">Mua X tặng Y</option>
+                <option value="freeItem">Tặng sản phẩm</option>
+              </select>
+            </div>
+            <div id="promoPercentFields">
+              <div class="mb-3">
+                <label class="form-label" style="font-size:0.85rem;">Giảm (%)</label>
+                <input type="number" name="discount" class="form-control" min="0" max="100" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+              </div>
+            </div>
+            <div id="promoBuyXGetYFields" class="d-none">
+              <div class="row mb-3">
+                <div class="col">
+                  <label class="form-label" style="font-size:0.85rem;">Mua (số lượng)</label>
+                  <input type="number" name="buyQuantity" class="form-control" min="1" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+                </div>
+                <div class="col">
+                  <label class="form-label" style="font-size:0.85rem;">Tặng (số lượng)</label>
+                  <input type="number" name="getQuantity" class="form-control" min="1" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+                </div>
+              </div>
+            </div>
+            <div id="promoFreeItemFields" class="d-none">
+              <div class="mb-3">
+                <label class="form-label" style="font-size:0.85rem;">ID sản phẩm tặng</label>
+                <input type="number" name="freeProductId" class="form-control" min="1" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" style="font-size:0.85rem;">Số lượng tối thiểu (đơn hàng)</label>
+              <input type="number" name="minQuantity" class="form-control" min="1" value="1" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+            </div>
+            <div class="row mb-3">
+              <div class="col">
+                <label class="form-label" style="font-size:0.85rem;">Ngày bắt đầu</label>
+                <input type="datetime-local" name="startDate" class="form-control" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+              </div>
+              <div class="col">
+                <label class="form-label" style="font-size:0.85rem;">Ngày kết thúc</label>
+                <input type="datetime-local" name="endDate" class="form-control" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+              </div>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="isActive" value="true" checked id="promoActive">
+              <label class="form-check-label fw-semibold" for="promoActive" style="font-size:0.85rem;">Kích hoạt ngay</label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius:var(--co-radius-sm);">Hủy</button>
+            <button type="submit" class="btn" style="background:var(--co-success);color:#fff;border-radius:var(--co-radius-sm);">Thêm mới</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ ADD VOUCHER MODAL ═══════ -->
+  <div class="modal fade" id="addVoucherModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header" style="background:var(--co-primary-dark);color:#fff;border-radius:var(--co-radius) var(--co-radius) 0 0;">
+          <h5 class="modal-title" style="font-size:1rem;"><i class="bi bi-plus-circle me-2"></i>Thêm Voucher</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <form action="/admin/vouchers" method="POST">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label" style="font-size:0.85rem;">Mã voucher</label>
+              <input type="text" name="code" class="form-control" required style="border-radius:var(--co-radius-sm);border-color:var(--co-border);" placeholder="e.g. SALE10">
+            </div>
+            <div class="mb-3">
+              <label class="form-label" style="font-size:0.85rem;">Mô tả</label>
+              <input type="text" name="description" class="form-control" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);" placeholder="Giảm 10% đơn hàng">
+            </div>
+            <div class="row mb-3">
+              <div class="col">
+                <label class="form-label" style="font-size:0.85rem;">Loại giảm</label>
+                <select name="discountType" class="form-select" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+                  <option value="percent">%</option>
+                  <option value="fixed">VNĐ</option>
+                </select>
+              </div>
+              <div class="col">
+                <label class="form-label" style="font-size:0.85rem;">Giá trị giảm</label>
+                <input type="number" step="0.01" name="discountValue" class="form-control" required style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col">
+                <label class="form-label" style="font-size:0.85rem;">Đơn tối thiểu</label>
+                <input type="number" name="minOrderValue" class="form-control" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+              </div>
+              <div class="col">
+                <label class="form-label" style="font-size:0.85rem;">Giảm tối đa</label>
+                <input type="number" name="maxDiscount" class="form-control" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col">
+                <label class="form-label" style="font-size:0.85rem;">Số lượt dùng</label>
+                <input type="number" name="usageLimit" class="form-control" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);" placeholder="Để trống = vô hạn">
+              </div>
+              <div class="col">
+                <label class="form-label" style="font-size:0.85rem;">Ngày hết hạn</label>
+                <input type="datetime-local" name="expiresAt" class="form-control" style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+              </div>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="isActive" value="true" checked id="voucherActive">
+              <label class="form-check-label fw-semibold" for="voucherActive" style="font-size:0.85rem;">Kích hoạt ngay</label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius:var(--co-radius-sm);">Hủy</button>
+            <button type="submit" class="btn" style="background:var(--co-success);color:#fff;border-radius:var(--co-radius-sm);">Thêm mới</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ ADD VOUCHER RULE MODAL ═══════ -->
+  <div class="modal fade" id="addVoucherRuleModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header" style="background:var(--co-primary-dark);color:#fff;border-radius:var(--co-radius) var(--co-radius) 0 0;">
+          <h5 class="modal-title" style="font-size:1rem;"><i class="bi bi-plus-circle me-2"></i>Thêm quy tắc Voucher</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <form action="/admin/voucher-rules" method="POST">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label" style="font-size:0.85rem;">Tên quy tắc</label>
+              <input type="text" name="name" class="form-control" required style="border-radius:var(--co-radius-sm);border-color:var(--co-border);" placeholder="VD: Tặng voucher cho khách VIP">
+            </div>
+            <div class="mb-3">
+              <label class="form-label" style="font-size:0.85rem;">Điều kiện</label>
+              <select name="triggerType" class="form-select" required style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+                <option value="totalSpend">Tổng chi tiêu (VNĐ)</option>
+                <option value="orderCount">Số đơn hàng</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" style="font-size:0.85rem;">Ngưỡng</label>
+              <input type="number" step="0.01" name="threshold" class="form-control" required style="border-radius:var(--co-radius-sm);border-color:var(--co-border);" placeholder="VD: 500000">
+            </div>
+            <div class="mb-3">
+              <label class="form-label" style="font-size:0.85rem;">Voucher ID</label>
+              <input type="number" name="voucherId" class="form-control" required style="border-radius:var(--co-radius-sm);border-color:var(--co-border);" placeholder="ID voucher sẽ được tặng">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius:var(--co-radius-sm);">Hủy</button>
+            <button type="submit" class="btn" style="background:var(--co-success);color:#fff;border-radius:var(--co-radius-sm);">Thêm mới</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ ASSIGN VOUCHER MODAL ═══════ -->
+  <div class="modal fade" id="assignVoucherModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header" style="background:var(--co-primary-dark);color:#fff;border-radius:var(--co-radius) var(--co-radius) 0 0;">
+          <h5 class="modal-title" style="font-size:1rem;"><i class="bi bi-plus-circle me-2"></i>Gán voucher cho người dùng</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="assignVoucherForm">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label" style="font-size:0.85rem;">Người dùng</label>
+              <select name="userId" id="avUser" class="form-select" required style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+                <option value="">Đang tải...</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" style="font-size:0.85rem;">Voucher</label>
+              <select name="voucherId" id="avVoucher" class="form-select" required style="border-radius:var(--co-radius-sm);border-color:var(--co-border);">
+                <option value="">Đang tải...</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius:var(--co-radius-sm);">Hủy</button>
+            <button type="submit" class="btn" style="background:var(--co-success);color:#fff;border-radius:var(--co-radius-sm);"><i class="bi bi-check-lg"></i> Gán</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
@@ -867,8 +1222,8 @@
         l.classList.toggle('active', l.dataset.section === sectionId);
       });
       // Update topbar title
-      const labels = { 'dashboard-stats': 'Dashboard', 'products': 'Sản phẩm', 'users': 'Người dùng', 'orders': 'Đơn hàng' };
-      const icons = { 'dashboard-stats': 'bi-speedometer2', 'products': 'bi-box-seam', 'users': 'bi-people', 'orders': 'bi-bag' };
+      const labels = { 'dashboard-stats': 'Dashboard', 'products': 'Sản phẩm', 'users': 'Người dùng', 'orders': 'Đơn hàng', 'bestseller-settings': 'Best Seller', 'promotions': 'Khuyến mãi', 'vouchers': 'Voucher', 'voucher-rules': 'Quy tắc Voucher', 'user-vouchers': 'Voucher User' };
+      const icons = { 'dashboard-stats': 'bi-speedometer2', 'products': 'bi-box-seam', 'users': 'bi-people', 'orders': 'bi-bag', 'bestseller-settings': 'bi-star', 'promotions': 'bi-percent', 'vouchers': 'bi-ticket-perforated', 'voucher-rules': 'bi-gift', 'user-vouchers': 'bi-people-fill' };
       topbarTitle.className = 'bi ' + (icons[sectionId] || 'bi-speedometer2') + ' me-2';
       topbarTitleText.childNodes[1].textContent = labels[sectionId] || 'Dashboard';
       // Close sidebar on mobile
@@ -1176,7 +1531,32 @@
       location.reload();
     });
 
-    // ── COUNTDOWN TIMERS ──
+        // ── ORDER TIMERS (elapsed since creation, live every second) ──
+    function updateOrderTimers() {
+      document.querySelectorAll('.order-timer').forEach(el => {
+        const status = el.dataset.status;
+        const created = el.dataset.created;
+        if (!created) return;
+        const span = el.querySelector('.timer-value');
+        if (!span) return;
+        if (status === 'completed' || status === 'cancelled') { span.textContent = '—'; return; }
+        const diff = Date.now() - new Date(created).getTime();
+        if (diff < 0) { span.textContent = '0s'; return; }
+        const secs = Math.floor(diff / 1000);
+        const mins = Math.floor(secs / 60);
+        const hrs = Math.floor(mins / 60);
+        if (hrs > 0) span.textContent = hrs + 'h ' + (mins % 60) + 'm';
+        else if (mins > 0) span.textContent = mins + 'm ' + (secs % 60) + 's';
+        else span.textContent = secs + 's';
+        if (mins >= 5) span.style.color = 'var(--co-danger)';
+        else if (mins >= 3) span.style.color = 'var(--co-warning)';
+        else span.style.color = 'var(--co-success)';
+      });
+    }
+    updateOrderTimers();
+    setInterval(updateOrderTimers, 1000);
+
+// ── COUNTDOWN TIMERS ──
     function updateCountdowns() {
       document.querySelectorAll('.countdown').forEach(el => {
         const time = el.dataset.time;
@@ -1387,6 +1767,245 @@
     if (!window.location.hash) {
       showSection('dashboard-stats');
     }
+
+    // ── BEST SELLER SECTION ──
+    async function loadBestSellerSettings() {
+      try {
+        const res = await fetch('/admin/bestseller/settings');
+        const data = await res.json();
+        document.getElementById('bsMinRating').value = data.settings.minRating;
+        document.getElementById('bsMinReviews').value = data.settings.minReviews;
+        const tbody = document.getElementById('bsProductBody');
+        tbody.innerHTML = data.products.map(p => {
+          let status = '', label = '', reason = p.bestSellerReason || '';
+          if (p.bestSellerOverride === true) { status = 'Đã bật (Override)'; label = 'label-success'; }
+          else if (p.bestSellerOverride === false) { status = 'Đã tắt (Override)'; label = 'label-danger'; }
+          else { status = p.isBestSeller ? 'Tự động Bán chạy' : 'Thường'; label = p.isBestSeller ? 'label-success' : 'label-secondary'; }
+          const overrideVal = p.bestSellerOverride === true ? 'true' : p.bestSellerOverride === false ? 'false' : 'auto';
+          return `<tr>
+            <td>${p.name}</td>
+            <td><span class="badge badge-status ${label}">${status}</span></td>
+            <td>
+              <select class="form-select form-select-sm bs-override" data-id="${p.id}" style="font-size:0.78rem;">
+                <option value="auto" ${overrideVal==='auto'?'selected':''}>Tự động</option>
+                <option value="true" ${overrideVal==='true'?'selected':''}>Luôn bật</option>
+                <option value="false" ${overrideVal==='false'?'selected':''}>Tắt</option>
+              </select>
+            </td>
+            <td><small class="text-muted">${reason}</small></td>
+          </tr>`;
+        }).join('');
+        // Override change handler
+        document.querySelectorAll('.bs-override').forEach(sel => {
+          sel.addEventListener('change', async function() {
+            await fetch('/admin/bestseller/toggle/' + this.dataset.id, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ override: this.value }),
+            });
+            showToast('Đã cập nhật', 'success');
+            loadBestSellerSettings();
+          });
+        });
+      } catch(e) { showToast('Lỗi tải best-seller: ' + e.message, 'error'); }
+    }
+    document.getElementById('bestsellerForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      await fetch('/admin/bestseller/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(new FormData(this)),
+      });
+      showToast('Đã lưu & tính lại', 'success');
+      loadBestSellerSettings();
+    });
+    document.querySelector('[data-section="bestseller-settings"]').addEventListener('click', loadBestSellerSettings, { once: true });
+
+    // ── PROMOTIONS SECTION ──
+    async function loadPromotions() {
+      try {
+        const res = await fetch('/admin/promotions');
+        const promos = await res.json();
+        document.getElementById('promotionsBody').innerHTML = promos.map(p => {
+          let detail = '';
+          if (p.type === 'buyXGetY') detail = `Mua ${p.buyQuantity} tặng ${p.getQuantity}`;
+          else if (p.type === 'percentOff') detail = `Giảm ${p.discount}% (tối thiểu ${p.minQuantity||1} sp)`;
+          else if (p.type === 'freeItem') detail = `Tặng sp #${p.freeProductId} (tối thiểu ${p.minQuantity||1} sp)`;
+          return `<tr>
+            <td>${p.name}</td>
+            <td><span class="badge badge-status" style="background:rgba(200,149,108,0.15);color:var(--co-secondary)">${p.type}</span></td>
+            <td><small>${detail}</small></td>
+            <td><span class="badge badge-status ${p.isActive ? 'completed' : 'cancelled'}">${p.isActive ? 'Đang chạy' : 'Tắt'}</span></td>
+            <td><button class="btn btn-sm btn-outline-danger" onclick="deletePromo(${p.id})"><i class="bi bi-trash"></i></button></td>
+          </tr>`;
+        }).join('');
+      } catch(e) { showToast('Lỗi tải khuyến mãi: ' + e.message, 'error'); }
+    }
+    window.deletePromo = async function(id) {
+      if (!confirm('Xóa chương trình khuyến mãi này?')) return;
+      await fetch('/admin/promotions/' + id + '/delete', { method: 'POST' });
+      showToast('Đã xóa', 'success');
+      loadPromotions();
+    };
+    document.querySelector('[data-section="promotions"]').addEventListener('click', loadPromotions, { once: true });
+
+    // ── VOUCHERS SECTION ──
+    async function loadVouchers() {
+      try {
+        const res = await fetch('/admin/vouchers');
+        const vouchers = await res.json();
+        document.getElementById('vouchersBody').innerHTML = vouchers.map(v => {
+          const desc = v.discountType === 'percent' ? `${v.discountValue}%` : `${v.discountValue.toLocaleString('vi-VN')}đ`;
+          const maxD = v.maxDiscount ? ` (tối đa ${v.maxDiscount.toLocaleString('vi-VN')}đ)` : '';
+          const minO = v.minOrderValue ? `<br><small>Tối thiểu: ${v.minOrderValue.toLocaleString('vi-VN')}đ</small>` : '';
+          const hsd = v.expiresAt ? new Date(v.expiresAt).toLocaleDateString('vi-VN') : 'Không';
+          return `<tr>
+            <td><strong>${v.code}</strong></td>
+            <td>${v.description || ''}${minO}</td>
+            <td>${desc}${maxD}</td>
+            <td>${v.usedCount}${v.usageLimit ? '/' + v.usageLimit : ''}</td>
+            <td>${hsd}</td>
+            <td><span class="badge badge-status ${v.isActive ? 'completed' : 'cancelled'}">${v.isActive ? 'Hoạt động' : 'Tắt'}</span></td>
+            <td><button class="btn btn-sm btn-outline-danger" onclick="deleteVoucher(${v.id})"><i class="bi bi-trash"></i></button></td>
+          </tr>`;
+        }).join('');
+      } catch(e) { showToast('Lỗi tải voucher: ' + e.message, 'error'); }
+    }
+    window.deleteVoucher = async function(id) {
+      if (!confirm('Xóa voucher này?')) return;
+      await fetch('/admin/vouchers/' + id + '/delete', { method: 'POST' });
+      showToast('Đã xóa', 'success');
+      loadVouchers();
+    };
+    document.querySelector('[data-section="vouchers"]').addEventListener('click', loadVouchers, { once: true });
+
+    // ── VOUCHER RULES SECTION ──
+    async function loadVoucherRules() {
+      try {
+        const res = await fetch('/admin/voucher-rules');
+        const rules = await res.json();
+        document.getElementById('voucherRulesBody').innerHTML = rules.map(r => {
+          const cond = r.triggerType === 'totalSpend' ? `Tổng chi ≥ ${r.threshold.toLocaleString('vi-VN')}đ` : r.triggerType === 'orderCount' ? `Số đơn ≥ ${r.threshold}` : r.triggerType;
+          return `<tr>
+            <td>${r.name}</td>
+            <td><small>${cond}</small></td>
+            <td>${r.voucher?.code || '#' + r.voucherId}</td>
+            <td><span class="badge badge-status ${r.isActive ? 'completed' : 'cancelled'}">${r.isActive ? 'Bật' : 'Tắt'}</span></td>
+            <td><button class="btn btn-sm btn-outline-danger" onclick="deleteVoucherRule(${r.id})"><i class="bi bi-trash"></i></button></td>
+          </tr>`;
+        }).join('');
+      } catch(e) { showToast('Lỗi tải quy tắc: ' + e.message, 'error'); }
+    }
+    window.deleteVoucherRule = async function(id) {
+      if (!confirm('Xóa quy tắc này?')) return;
+      await fetch('/admin/voucher-rules/' + id + '/delete', { method: 'POST' });
+      showToast('Đã xóa', 'success');
+      loadVoucherRules();
+    };
+    document.querySelector('[data-section="voucher-rules"]').addEventListener('click', loadVoucherRules, { once: true });
+
+    // ── PROMO TYPE TOGGLE ──
+    document.getElementById('promoType')?.addEventListener('change', function() {
+      document.getElementById('promoPercentFields').classList.toggle('d-none', this.value !== 'percentOff');
+      document.getElementById('promoBuyXGetYFields').classList.toggle('d-none', this.value !== 'buyXGetY');
+      document.getElementById('promoFreeItemFields').classList.toggle('d-none', this.value !== 'freeItem');
+    });
+
+    // ── ASSIGN VOUCHER FORM ──
+    document.getElementById('assignVoucherForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const fd = new FormData(this);
+      try {
+        const res = await fetch('/admin/assign-voucher', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+          body: new URLSearchParams(fd),
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Đã gán voucher thành công', 'success');
+          bootstrap.Modal.getInstance(document.getElementById('assignVoucherModal')).hide();
+          loadUserVouchers();
+        } else {
+          showToast('Lỗi gán voucher', 'error');
+        }
+      } catch(e) { showToast('Loi: ' + e.message, 'error'); }
+    });
+
+    // Preload user & voucher lists when modal opens
+    document.getElementById('assignVoucherModal').addEventListener('show.bs.modal', async function() {
+      try {
+        const userSelect = document.getElementById('avUser');
+        userSelect.innerHTML = '<option value="">Chon user...</option>';
+        const allUsers = <%- JSON.stringify(users.map(u => ({id: u.id, username: u.username, email: u.email}))) %>;
+        allUsers.forEach(u => {
+          userSelect.innerHTML += '<option value="' + u.id + '">' + u.username + ' (' + u.email + ')</option>';
+        });
+
+        const vRes = await fetch('/admin/vouchers');
+        const vouchers = await vRes.json();
+        const voucherSelect = document.getElementById('avVoucher');
+        voucherSelect.innerHTML = '<option value="">Chon voucher...</option>';
+        vouchers.filter(v => v.isActive).forEach(v => {
+          const desc = v.discountType === 'percent' ? v.discountValue + '%' : Number(v.discountValue).toLocaleString('vi-VN') + 'đ';
+          voucherSelect.innerHTML += '<option value="' + v.id + '">' + v.code + ' - ' + desc + '</option>';
+        });
+      } catch(e) { showToast('Lỗi tải dữ liệu: ' + e.message, 'error'); }
+    });
+
+    // ── INIT: load sections when hash changes ──
+    // Also preload the first time a section is shown
+    const origShow = showSection;
+    showSection = function(sectionId) {
+      origShow(sectionId);
+      if (sectionId === 'bestseller-settings') loadBestSellerSettings();
+      else if (sectionId === 'promotions') loadPromotions();
+      else if (sectionId === 'vouchers') loadVouchers();
+      else if (sectionId === 'voucher-rules') loadVoucherRules();
+	      else if (sectionId === 'user-vouchers') loadUserVouchers();
+    };
+
+    // ── USER VOUCHERS ──
+    async function loadUserVouchers() {
+      try {
+        const res = await fetch('/admin/user-vouchers');
+        const uvs = await res.json();
+        const tbody = document.getElementById('userVouchersBody');
+        if (!uvs.length) {
+          tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="bi bi-ticket-perforated"></i><p>Chua co voucher nao duoc gan</p></div></td></tr>';
+          return;
+        }
+        tbody.innerHTML = uvs.map(uv => {
+          const desc = uv.voucher.discountType === 'percent' ? uv.voucher.discountValue + '%' : Number(uv.voucher.discountValue).toLocaleString('vi-VN') + 'đ';
+          const hsd = uv.voucher.expiresAt ? new Date(uv.voucher.expiresAt).toLocaleDateString('vi-VN') : 'Không có';
+          const used = uv.usedAt ? '<span class="badge-status completed">Da dung</span>' : '<span class="badge-status pending">Chua dung</span>';
+          return '<tr>' +
+            '<td>' + uv.user.username + '</td>' +
+            '<td><small class="text-muted">' + uv.user.email + '</small></td>' +
+            '<td><strong>' + uv.voucher.code + '</strong></td>' +
+            '<td>' + desc + '</td>' +
+            '<td>' + used + '</td>' +
+            '<td><small class="text-muted">' + new Date(uv.createdAt).toLocaleDateString('vi-VN') + '</small></td>' +
+            '<td class="text-end"><small class="text-muted">' + hsd + '</small></td>' +
+            '</tr>';
+        }).join('');
+        document.getElementById('uvSearch').oninput = function() {
+          const q = this.value.toLowerCase();
+          tbody.querySelectorAll('tr').forEach(row => {
+            row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+          });
+        };
+      } catch(e) { showToast('Lỗi tải user vouchers: ' + e.message, 'error'); }
+    }
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

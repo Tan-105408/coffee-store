@@ -237,7 +237,7 @@ const handlePayOSCancel = asyncHandler(async (req, res) => {
     await payOSService.cancelByOrderCode(orderCode);
   }
 
-  res.redirect("/");
+  res.redirect("/cart");
 });
 
 module.exports = {

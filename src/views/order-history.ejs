@@ -103,6 +103,7 @@
                 <% if (product) { %>
                   <button class="btn btn-sm mt-1 review-btn" style="color:var(--co-secondary);border:1px solid var(--co-border-strong);"
                     data-product-id="<%= product.id %>"
+                    data-order-id="<%= order.id %>"
                     data-product-name="<%= product.name %>"
                     data-product-image="<%= product.image %>"
                     data-bs-toggle="modal" data-bs-target="#reviewModal">
@@ -159,6 +160,7 @@
           </div>
 
           <input type="hidden" id="reviewProductId">
+          <input type="hidden" id="reviewOrderId">
 
           <label class="form-label fw-semibold small text-uppercase mb-2" style="color:var(--co-text-muted);">Đánh giá sao</label>
           <div class="star-rating mb-3" id="starRating">
@@ -194,15 +196,24 @@
       btn.outerHTML = '<span class="btn btn-sm mt-1" disabled style="color:var(--co-success);"><i class="bi bi-check-circle me-1"></i>Đã đánh giá</span>';
     }
 
+    // Check reviews per-order (group buttons by orderId, call API per order)
     (async function() {
       const btns = document.querySelectorAll('.review-btn');
       if (!btns.length) return;
-      const ids = [...btns].map(b => b.dataset.productId).join(',');
-      try {
-        const res = await fetch('/review/check-reviewed?productIds=' + ids, { credentials: 'same-origin' });
-        const data = await res.json();
-        btns.forEach(btn => { if (data[btn.dataset.productId]) markAsReviewed(btn); });
-      } catch(e) {}
+      const groups = {};
+      btns.forEach(b => {
+        const oid = b.dataset.orderId;
+        if (!groups[oid]) groups[oid] = [];
+        groups[oid].push(b);
+      });
+      for (const [orderId, orderBtns] of Object.entries(groups)) {
+        const ids = orderBtns.map(b => b.dataset.productId).join(',');
+        try {
+          const res = await fetch('/review/check-reviewed?productIds=' + ids + '&orderId=' + orderId, { credentials: 'same-origin' });
+          const data = await res.json();
+          orderBtns.forEach(btn => { if (data[btn.dataset.productId]) markAsReviewed(btn); });
+        } catch(e) {}
+      }
     })();
 
     const stars = document.querySelectorAll('#starRating i');
@@ -227,6 +238,7 @@
       btn.addEventListener('click', function() {
         currentReviewBtn = this;
         document.getElementById('reviewProductId').value = this.dataset.productId;
+        document.getElementById('reviewOrderId').value = this.dataset.orderId;
         document.getElementById('reviewProductName').textContent = this.dataset.productName;
         document.getElementById('reviewProductImage').src = this.dataset.productImage;
         document.getElementById('reviewComment').value = '';
@@ -237,16 +249,18 @@
 
     document.getElementById('submitReviewBtn').addEventListener('click', async function() {
       const productId = parseInt(document.getElementById('reviewProductId').value);
+      const orderId = parseInt(document.getElementById('reviewOrderId').value);
       const comment = document.getElementById('reviewComment').value.trim();
       if (!selectedRating) { Swal.fire({ text: 'Vui lòng chọn số sao!', icon: 'warning', confirmButtonColor: '#4A2C2A' }); return; }
       const btn = this; const originalText = btn.innerHTML;
       btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang gửi...';
       try {
-        const response = await fetch('/review/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ productId, rating: selectedRating, comment }) });
+        const response = await fetch('/review/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ productId, orderId, rating: selectedRating, comment }) });
         const data = await response.json();
         if (response.ok) {
           Swal.fire({ text: 'Cảm ơn bạn!', icon: 'success', confirmButtonColor: '#3D8B6E', timer: 2000, timerProgressBar: true, showConfirmButton: false });
           bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide();
+          if (currentReviewBtn) markAsReviewed(currentReviewBtn);
         } else { Swal.fire({ text: data.message || 'Có lỗi!', icon: 'error', confirmButtonColor: '#4A2C2A' }); }
       } catch(err) { Swal.fire({ text: 'Vui lòng đăng nhập!', icon: 'error', confirmButtonColor: '#4A2C2A' }); }
       finally { btn.disabled = false; btn.innerHTML = originalText; }

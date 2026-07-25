@@ -57,14 +57,40 @@ async function main() {
     await prisma.user.create({
         data: {
             username: 'admin',
-            email: 'admin@coffeestore.com',
+            email: 'sutu567920@gmail.com',
             password: hashedPassword,
             role: 'admin',
             address: 'Admin Address'
         }
     });
 
-    console.log(`🎉 Hoàn tất! Đã thêm ${products.length} sản phẩm và 1 tài khoản Admin.`);
+    console.log('✅ Đang tạo Voucher mẫu...');
+    const vouchers = await Promise.all([
+      prisma.voucher.create({ data: { code: 'WELCOME10', description: 'Giảm 10% cho đơn đầu tiên', discountType: 'percent', discountValue: 10, minOrderValue: 50000, maxDiscount: 50000, isActive: true } }),
+      prisma.voucher.create({ data: { code: 'SALE20', description: 'Giảm 20% đơn từ 200k', discountType: 'percent', discountValue: 20, minOrderValue: 200000, maxDiscount: 100000, isActive: true } }),
+      prisma.voucher.create({ data: { code: 'FREESHIP', description: 'Miễn phí vận chuyển', discountType: 'fixed', discountValue: 30000, minOrderValue: 150000, isActive: true } }),
+      prisma.voucher.create({ data: { code: 'SILVER50', description: 'Khách hàng thân thiết - giảm 50k', discountType: 'fixed', discountValue: 50000, minOrderValue: 300000, isActive: true } }),
+      prisma.voucher.create({ data: { code: 'GOLD100', description: 'VIP - giảm 100k', discountType: 'fixed', discountValue: 100000, minOrderValue: 500000, isActive: true } }),
+      prisma.voucher.create({ data: { code: 'BIG30', description: 'Giảm 30% đơn từ 500k', discountType: 'percent', discountValue: 30, minOrderValue: 500000, maxDiscount: 200000, isActive: true } }),
+    ]);
+    console.log(`✅ Đã tạo ${vouchers.length} voucher mẫu`);
+
+    console.log('✅ Đang tạo Quy tắc Voucher mẫu...');
+    // Rule: chi 500k → được WELCOME10 (dùng cho lần tiếp)
+    await prisma.voucherRule.create({ data: { name: 'Khách mới đạt 500k', triggerType: 'totalSpend', threshold: 500000, voucherId: vouchers[0].id, isActive: true } });
+    // Rule: chi 1tr → được SALE20
+    await prisma.voucherRule.create({ data: { name: 'Thân thiết 1 triệu', triggerType: 'totalSpend', threshold: 1000000, voucherId: vouchers[1].id, isActive: true } });
+    // Rule: 3 đơn → được FREESHIP
+    await prisma.voucherRule.create({ data: { name: 'Khách quen 3 đơn', triggerType: 'orderCount', threshold: 3, voucherId: vouchers[2].id, isActive: true } });
+    // Rule: chi 2tr → được SILVER50
+    await prisma.voucherRule.create({ data: { name: 'Bạc 2 triệu', triggerType: 'totalSpend', threshold: 2000000, voucherId: vouchers[3].id, isActive: true } });
+    // Rule: 5 đơn → được GOLD100
+    await prisma.voucherRule.create({ data: { name: 'Vàng 5 đơn', triggerType: 'orderCount', threshold: 5, voucherId: vouchers[4].id, isActive: true } });
+    // Rule: chi 5tr → được BIG30
+    await prisma.voucherRule.create({ data: { name: 'Kim cương 5 triệu', triggerType: 'totalSpend', threshold: 5000000, voucherId: vouchers[5].id, isActive: true } });
+    console.log('✅ Đã tạo 6 quy tắc voucher mẫu');
+
+    console.log(`🎉 Hoàn tất! Đã thêm ${products.length} sản phẩm, 1 tài khoản Admin, ${vouchers.length} voucher và 6 quy tắc.`);
 }
 
 main()

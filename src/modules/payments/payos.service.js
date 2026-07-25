@@ -226,6 +226,18 @@ class PayOSService {
         })
       ]);
 
+      // Xóa giỏ hàng khi thanh toán thành công
+      if (status.toLowerCase() === 'paid' || status.toLowerCase() === 'success' || status.toLowerCase() === 'completed') {
+        await prisma.cartItem.deleteMany({ where: { cart: { userId: order.userId } } });
+        await prisma.cart.deleteMany({ where: { userId: order.userId } });
+        // Auto-assign vouchers based on rules
+        const { checkAutoAssignment } = require("../vouchers/vouchers.service");
+        checkAutoAssignment(order.userId, order.totalAmount).catch(err =>
+          console.error("[PayOS] Auto-assign voucher failed:", err)
+        );
+        console.log(`Cart cleared for user ${order.userId} after successful PayOS payment`);
+      }
+
       console.log(`PayOS webhook OK: Order ${order.id}, Status: ${status}`);
       return { status: "SUCCESS", message: "Webhook processed successfully" };
 

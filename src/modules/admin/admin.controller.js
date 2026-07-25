@@ -43,8 +43,14 @@ const getDashboard = asyncHandler(async (req, res) => {
     monthlyData[i].trend = prev === 0 ? (monthlyData[i].orders > 0 ? 100 : 0) : Math.round(((monthlyData[i].orders - prev) / prev) * 100);
   }
 
+  // ── Promotions, Vouchers, VoucherRules ──
+  const promotions = await prisma.promotion.findMany({ orderBy: { createdAt: "desc" } });
+  const vouchers = await prisma.voucher.findMany({ orderBy: { createdAt: "desc" } });
+  const voucherRules = await prisma.voucherRule.findMany({ include: { voucher: true }, orderBy: { id: "desc" } });
+
   res.render("admin-dashboard", {
     users, products, orders, user: req.user,
+    promotions, vouchers, voucherRules,
     stats: {
       todayOrders: todayOrders.length, todayRevenue, yesterdayOrders: yesterdayOrders.length,
       pendingCount, processingCount, completedCount, cancelledCount,
@@ -69,7 +75,7 @@ const deleteUser = asyncHandler(async (req, res) => {
 });
 
 const addProduct = asyncHandler(async (req, res) => {
-  const { name, price, image, category, description, discount, isBestSeller } = req.body;
+  const { name, price, image, category, description, discount, isBestSeller, promoTag } = req.body;
   await prisma.product.create({
     data: {
       name,
@@ -79,13 +85,14 @@ const addProduct = asyncHandler(async (req, res) => {
       description,
       discount: discount ? parseInt(discount) : 0,
       isBestSeller: isBestSeller === "true",
+      promoTag: promoTag || null,
     },
   });
   res.redirect("/admin");
 });
 
 const updateProduct = asyncHandler(async (req, res) => {
-  const { name, price, image, description, category, discount, isBestSeller } = req.body;
+  const { name, price, image, description, category, discount, isBestSeller, promoTag } = req.body;
   await prisma.product.update({
     where: { id: parseInt(req.params.id) },
     data: {
@@ -96,6 +103,7 @@ const updateProduct = asyncHandler(async (req, res) => {
       category,
       discount: discount ? parseInt(discount) : 0,
       isBestSeller: isBestSeller === "true",
+      promoTag: promoTag || null,
     },
   });
   res.redirect("/admin");
@@ -162,4 +170,24 @@ const deleteOrder = asyncHandler(async (req, res) => {
   res.redirect("/admin");
 });
 
-module.exports = { getDashboard, deleteUser, addProduct, updateProduct, deleteProduct, updateOrderStatus, updateOrderNote, deleteOrder };
+// ── Admin view user vouchers ──
+const getUserVouchers = asyncHandler(async (req, res) => {
+  const userVouchers = await prisma.userVoucher.findMany({
+    include: { user: { select: { id: true, username: true, email: true } }, voucher: true },
+    orderBy: { createdAt: "desc" },
+  });
+  res.json(userVouchers);
+});
+
+// ── Admin assign voucher to user ──
+const assignVoucherToUser = asyncHandler(async (req, res) => {
+  const { userId, voucherId } = req.body;
+  const { assignVoucher } = require("../vouchers/vouchers.service");
+  await assignVoucher(parseInt(userId), parseInt(voucherId));
+  if (req.xhr || (req.headers.accept && req.headers.accept.includes("application/json"))) {
+    return res.json({ success: true });
+  }
+  res.redirect("/admin#user-vouchers");
+});
+
+module.exports = { getDashboard, deleteUser, addProduct, updateProduct, deleteProduct, updateOrderStatus, updateOrderNote, deleteOrder, getUserVouchers, assignVoucherToUser };
