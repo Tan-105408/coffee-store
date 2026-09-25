@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coffee Store — Mermaid Diagrams</title>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; background: #faf7f2; margin: 0; padding: 24px; }
+  h1 { color: #4A2C2A; text-align: center; }
+  .card { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.08); margin: 24px auto; padding: 16px; max-width: 1100px; }
+  .card h2 { color: #4A2C2A; border-bottom: 2px solid #C8956C; padding-bottom: 8px; }
+  .mermaid { display: flex; justify-content: center; overflow-x: auto; }
+  .err { color: #c00; font-family: monospace; white-space: pre-wrap; }
+  /* ── Cây thư mục ─────────────────────────── */
+  .tree, .tree ul { margin: 0; padding-left: 20px; list-style: none; }
+  .tree li { position: relative; line-height: 1.7; font-size: 14px; color: #333; }
+  .tree li::before { content: ""; position: absolute; left: -12px; top: 0; bottom: 50%; border-left: 1px solid #c8956c; }
+  .tree li::after { content: ""; position: absolute; left: -12px; top: 50%; width: 8px; border-top: 1px solid #c8956c; }
+  .tree li:last-child::before { bottom: 50%; }
+  .tree ul > li:first-child::before { top: 50%; }
+  .tree li:only-child::before { display: none; }
+  .tree li:only-child::after { width: 8px; }
+  .tree .d { cursor: pointer; user-select: none; font-weight: 600; color: #4a2c2a; }
+  .tree .d::before { content: "📁 "; }
+  .tree li.dir.closed > ul { display: none; }
+  .tree li.dir.closed > .d::before { content: "📂 "; }
+  .tree li.f::before { content: none; }
+  .tree li.f::after { content: none; }
+  .tree li.f { padding-left: 20px; position: relative; }
+  .tree li.f::before { content: ""; position: absolute; left: -12px; top: 50%; width: 8px; border-top: 1px solid #c8956c; }
+</style>
+</head>
+<body>
+<h1>Coffee Store — Mermaid Diagrams</h1>
+<p style="text-align:center;color:#666">Render bởi mermaid.js · 13 diagram · nguồn docs/mermaid-diagrams.md</p>
+
+<div class="card">
+  <h2>10. 12. CẤU TRÚC DỰ ÁN</h2>
+  <div class="tree" id="tree12">
+  <ul>
+    <li class="dir open"><span class="d">coffee-store/</span>
+      <ul>
+        <li class="f">.env</li>
+        <li class="f">package.json</li>
+        <li class="f">seed.js</li>
+        <li class="dir open"><span class="d">src/</span>
+          <ul>
+            <li class="f">app.js</li>
+            <li class="f">firebase.js</li>
+            <li class="f">server.js</li>
+          </ul>
+        </li>
+        <li class="dir open"><span class="d">config/</span>
+          <ul>
+            <li class="f">db.js</li>
+            <li class="f">env.js</li>
+            <li class="f">serviceAccountKey.json</li>
+          </ul>
+        </li>
+        <li class="dir open"><span class="d">middlewares/</span>
+          <ul>
+            <li class="f">auth.middleware.js</li>
+            <li class="f">role.middleware.js</li>
+            <li class="f">error.middleware.js</li>
+            <li class="f">logging.middleware.js</li>
+            <li class="f">optionalAuth.middleware.js</li>
+          </ul>
+        </li>
+        <li class="dir"><span class="d">modules/</span>
+          <ul>
+            <li class="dir"><span class="d">auth/</span><ul><li class="f">auth.routes/controller/service.js</li></ul></li>
+            <li class="dir"><span class="d">products/</span><ul><li class="f">products.routes/controller/service.js</li></ul></li>
+            <li class="dir"><span class="d">carts/</span><ul><li class="f">carts.routes/controller/service.js</li></ul></li>
+            <li class="dir"><span class="d">checkout/</span><ul><li class="f">checkout.routes/controller/service.js</li></ul></li>
+            <li class="dir"><span class="d">orders/</span><ul><li class="f">orders.routes/controller/service.js</li></ul></li>
+            <li class="dir"><span class="d">payments/</span><ul><li class="f">payos.routes/controller/service.js</li></ul></li>
+            <li class="dir"><span class="d">reviews/</span><ul><li class="f">reviews.routes/controller/service.js</li></ul></li>
+            <li class="dir"><span class="d">promotions/</span><ul><li class="f">promotions.routes/controller/service.js</li></ul></li>
+            <li class="dir"><span class="d">vouchers/</span><ul><li class="f">vouchers.routes/controller/service.js</li><li class="f">voucher-rules.routes.js</li></ul></li>
+            <li class="dir"><span class="d">bestseller/</span><ul><li class="f">bestseller.routes/controller/service.js</li></ul></li>
+            <li class="dir"><span class="d">admin/</span><ul><li class="f">admin.routes/controller.js</li></ul></li>
+            <li class="dir"><span class="d">users/</span><ul><li class="f">(trống)</li></ul></li>
+          </ul>
+        </li>
+        <li class="dir open"><span class="d">public/</span>
+          <ul>
+            <li class="f">style.css</li>
+            <li class="f">script.js</li>
+            <li class="f">*.jfif (ảnh sản phẩm)</li>
+          </ul>
+        </li>
+        <li class="dir"><span class="d">views/</span>
+          <ul>
+            <li class="f">home.ejs</li>
+            <li class="f">login.ejs</li>
+            <li class="f">register.ejs</li>
+            <li class="f">product-detail.ejs</li>
+            <li class="f">products.ejs</li>
+            <li class="f">cart.ejs</li>
+            <li class="f">checkout.ejs</li>
+            <li class="f">order-history.ejs</li>
+            <li class="f">admin-dashboard.ejs</li>
+            <li class="f">profile.ejs</li>
+            <li class="f">forgot-password.ejs</li>
+            <li class="f">checkout_success.ejs</li>
+            <li class="f">checkout_failed.ejs</li>
+            <li class="f">error.ejs</li>
+            <li class="dir"><span class="d">partials/</span><ul><li class="f">*.ejs</li></ul></li>
+          </ul>
+        </li>
+        <li class="dir open"><span class="d">prisma/</span>
+          <ul>
+            <li class="f">schema.prisma (14 models)</li>
+            <li class="f">migrations/</li>
+          </ul>
+        </li>
+        <li class="dir open"><span class="d">logs/</span>
+          <ul>
+            <li class="f">server.log</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
+</div>
+
+<div class="card">
+  <h2>1. 1. DANH SÁCH CÁC BẢNG</h2>
+  <pre class="mermaid">erDiagram
+    User ||--|| Cart : "1 user 1 giỏ"
+    User ||--o{ Order : "đặt"
+    User ||--o{ Review : "viết"
+    User ||--o{ RefreshToken : "có"
+    User ||--o{ UserVoucher : "nhận"
+    Cart ||--o{ CartItem : "chứa"
+    Product ||--o{ CartItem : "có trong"
+    Product ||--o{ OrderItem : "có trong"
+    Product ||--o{ Review : "được đánh giá"
+    Order ||--o{ OrderItem : "gồm"
+    Order ||--o{ PaymentTransaction : "có"
+    Order ||--o{ Review : "có"
+    Voucher ||--o{ UserVoucher : "được gán cho"
+    Voucher ||--o{ VoucherRule : "có quy tắc"
+    Promotion o|--o{ Product : "freeItem tặng"
+
+    User {
+        int id PK
+        string username
+        string email UK
+        string password "bcrypt, null nếu Google"
+        string role "user|admin"
+        boolean isActive
+        string googleId UK
+        string address
+        datetime createdAt
+        datetime updatedAt
+    }
+    Product {
+        int id PK
+        string name
+        float price
+        string image
+        string description
+        string category
+        int discount
+        boolean isBestSeller
+        boolean bestSellerOverride "null=auto"
+        string bestSellerReason
+        string promoTag
+        datetime createdAt
+        datetime updatedAt
+    }
+    Cart {
+        int id PK
+        int userId FK
+        datetime createdAt
+        datetime updatedAt
+    }
+    CartItem {
+        int id PK
+        int cartId FK
+        int productId FK
+        int quantity
+        string options "JSON size/sugar/ice/toppings"
+    }
+    Order {
+        int id PK
+        int userId FK
+        float totalAmount
+        string status "pending|processing|completed|cancelled"
+        string paymentMethod "cash|vnpay|payos"
+        string paymentStatus "pending|completed|failed"
+        datetime paymentTimestamp
+        string deliveryAddress
+        datetime deliveryTime
+        datetime estimatedReadyTime
+        string note
+        datetime createdAt
+        datetime updatedAt
+    }
+    OrderItem {
+        int id PK
+        int orderId FK
+        int productId FK
+        int quantity
+        float priceAtPurchase
+        string options "JSON"
+    }
+    PaymentTransaction {
+        int id PK
+        int orderId FK
+        string orderCode UK "PayOS orderCode"
+        string provider "cash|vnpay|payos"
+        string status "pending|processing|completed|failed|cancelled"
+        string transactionId
+        float amount
+        string currency "VND"
+        string errorCode
+        string errorMessage
+        datetime paidAt
+        datetime createdAt
+        datetime updatedAt
+    }
+    Review {
+        int id PK
+        int userId FK
+        int productId FK
+        int rating
+        int orderId FK
+        string comment
+        datetime createdAt
+    }
+    RefreshToken {
+        int id PK
+        string token UK
+        int userId FK
+        datetime expiresAt
+        datetime createdAt
+    }
+    SiteSetting {
+        int id PK
+        string key UK
+        string value
+    }
+    Promotion {
+        int id PK
+        string name
+        string type "buyXGetY|percentOff|freeItem"
+        int buyQuantity
+        int getQuantity
+        int minQuantity
+        float discount
+        int freeProductId FK "sp tặng"
+        boolean isActive
+        datetime startDate
+        datetime endDate
+        datetime createdAt
+    }
+    Voucher {
+        int id PK
+        string code UK
+        string description
+        string discountType "percent|fixed"
+        float discountValue
+        float minOrderValue
+        float maxDiscount
+        int usageLimit
+        int usedCount
+        boolean isActive
+        datetime expiresAt
+        datetime createdAt
+    }
+    UserVoucher {
+        int id PK
+        int userId FK
+        int voucherId FK
+        boolean isUsed
+        datetime usedAt
+        datetime createdAt
+    }
+    VoucherRule {
+        int id PK
+        string name
+        string triggerType "totalSpend|orderCount|specificProduct"
+        float threshold
+        int voucherId FK
+        boolean isActive
+    }</pre>
+</div>
+<div class="card">
+  <h2>2. 4. USE CASE DIAGRAM</h2>
+  <pre class="mermaid">%%{init: {"flowchart": {"nodeSpacing": 70, "rankSpacing": 70}}}%%
+graph TD
+    subgraph System["COFFEE STORE SYSTEM"]
+        UC1[Đăng ký]
+        UC2[Đăng nhập]
+        UC3[Xem/Tìm sản phẩm]
+        UC4[Chi tiết + Tùy chỉnh món]
+        UC5[Giỏ hàng]
+        UC6[Thanh toán]
+        UC7[Áp dụng voucher]
+        UC8[Đánh giá sản phẩm]
+        UC9[Lịch sử đơn hàng]
+        UC10[Nhận email xác nhận]
+        UC11[Dashboard thống kê]
+        UC12[Quản lý sản phẩm]
+        UC13[Quản lý đơn hàng]
+        UC14[Quản lý người dùng]
+        UC15[Quản lý khuyến mãi]
+        UC16[Quản lý voucher]
+        UC17[Gán voucher cho user]
+        UC18[Best Seller]
+
+        UC6 -. extends .-> UC7
+        UC6 -. extends .-> UC10
+        UC8 -. extends .-> UC2
+        UC11 -. extends .-> UC18
+    end
+
+    Customer((Khách hàng)) --- UC1
+    Customer --- UC2
+    Customer --- UC3
+    Customer --- UC4
+    Customer --- UC5
+    Customer --- UC6
+    Customer --- UC7
+    Customer --- UC8
+    Customer --- UC9
+    Customer --- UC10
+
+    Admin((Quản trị viên)) --- UC11
+    Admin --- UC12
+    Admin --- UC13
+    Admin --- UC14
+    Admin --- UC15
+    Admin --- UC16
+    Admin --- UC17
+    Admin --- UC18
+
+    PayOS((PayOS)) -.-> UC6
+    Firebase((Firebase Auth)) -.-> UC2
+    Gmail((Gmail SMTP)) -.-> UC10</pre>
+</div>
+<div class="card">
+  <h2>3. 5. ACTIVITY DIAGRAM — ĐẶT HÀNG (COD)</h2>
+  <pre class="mermaid">%%{init: {"flowchart": {"nodeSpacing": 70, "rankSpacing": 70}}}%%
+flowchart TD
+    A([Bắt đầu]) --> B[Chọn sản phẩm]
+    B --> C[Tùy chỉnh món: size, đường, đá, topping]
+    C --> D[Thêm vào giỏ hàng]
+    D --> E[Tiến hành thanh toán]
+    E --> F{Chọn phương thức?}
+    F -->|COD| G[Nhập/áp voucher nếu có]
+    F -->|PayOS| G
+    G --> H{Validate voucher + tổng tiền}
+    H -->|Lỗi| I[Hiển thị lỗi]
+    I --> G
+    H -->|OK| J[Tạo Order + Xóa giỏ hàng]
+    J --> K[Gửi email xác nhận]
+    K --> L[Check auto-assign voucher]
+    L --> M([Hoàn tất])
+
+    K -.-> N[Admin xem đơn mới]
+    N --> O[Admin cập nhật trạng thái]
+    O --> P[completed / cancelled]</pre>
+</div>
+<div class="card">
+  <h2>4. 6. SEQUENCE DIAGRAM — THANH TOÁN PAYOS</h2>
+  <pre class="mermaid">sequenceDiagram
+    autonumber
+    participant C as Client Browser
+    participant S as Express Server
+    participant P as PayOS API
+    participant E as Gmail SMTP
+    participant D as SQL Server
+
+    C->>S: POST /checkout {paymentMethod: payos, voucher}
+    S->>S: Validate voucher + tính tổng
+    S->>D: Create Order (status=pending, paymentStatus=pending)
+    D-->>S: order {id, totalAmount}
+    S->>P: POST /v2/payment-requests {orderCode, amount, ...}
+    P-->>S: {checkoutUrl}
+    S-->>C: Redirect đến checkoutUrl
+
+    rect rgb(245, 245, 245)
+        note over P: User thanh toán trên PayOS
+        P->>S: POST /webhook {orderCode, status: PAID}
+        S->>S: Verify signature HMAC-SHA256
+        S->>D: Update Order → completed, delete cart
+        S->>E: Gửi email xác nhận
+        S->>S: autoAssignVoucher() nếu đủ milestone
+    end
+
+    C->>S: GET /payment/return
+    S-->>C: Render checkout_success</pre>
+</div>
+<div class="card">
+  <h2>5. 7. SEQUENCE DIAGRAM — TỰ ĐỘNG GÁN VOUCHER</h2>
+  <pre class="mermaid">sequenceDiagram
+    autonumber
+    participant O as Order completed
+    participant VS as VoucherService
+    participant DB as SQL Server
+
+    O->>VS: checkAutoAssignment(order)
+    VS->>DB: Lấy tất cả VoucherRule (isActive)
+    DB-->>VS: [{rule}]
+
+    loop Mỗi rule
+        VS->>DB: [trigger=totalSpend] aggregate tổng chi tiêu user
+        VS->>DB: [trigger=orderCount] count đơn user
+        DB-->>VS: giá trị milestone
+        alt Đủ threshold && chưa có
+            VS->>DB: Upsert UserVoucher
+            DB-->>VS: OK
+        end
+    end</pre>
+</div>
+<div class="card">
+  <h2>6. 8. KIẾN TRÚC TỔNG THỂ</h2>
+  <pre class="mermaid">%%{init: {"flowchart": {"nodeSpacing": 70, "rankSpacing": 70}}}%%
+flowchart LR
+    subgraph Client["CLIENT (Browser)"]
+        EJS[HTML/EJS]
+        CSS[CSS/Bootstrap 5]
+        JS[JavaScript Vanilla]
+    end
+
+    subgraph Server["EXPRESS SERVER"]
+        Router[ROUTER<br/>/auth /products /cart /checkout /admin]
+        MW[MIDDLEWARE<br/>session / cookie / auth / role / logging / error]
+        Controller[CONTROLLERS<br/>auth / cart / checkout / product / admin]
+        Service[SERVICES<br/>business logic / voucher / payos / email]
+        Prisma[PRISMA ORM]
+    end
+
+    subgraph Ext["DỊCH VỤ NGOÀI"]
+        PayOS[(PayOS)]
+        Firebase[(Firebase Auth)]
+        Gmail[(Gmail SMTP)]
+    end
+
+    DB[(SQL SERVER<br/>14 bảng)]
+
+    EJS --- CSS --- JS
+    Client <-->|HTTP + session cookie| Router
+    Router --> MW --> Controller --> Service --> Prisma --> DB
+    Prisma -.->|render view| Client
+    Service <--> PayOS
+    Service <--> Firebase
+    Service <--> Gmail</pre>
+</div>
+<div class="card">
+  <h2>7. 9. MÔ HÌNH MVC</h2>
+  <pre class="mermaid">%%{init: {"flowchart": {"nodeSpacing": 70, "rankSpacing": 70}}}%%
+flowchart TD
+    subgraph MVC["MVC + SERVICE LAYER"]
+        Router[ROUTER<br/>*.routes.js<br/>endpoint → controller]
+        Controller[CONTROLLER<br/>*.controller.js<br/>nhận req, gọi service, render]
+        Service[SERVICE<br/>*.service.js<br/>business logic, gọi Prisma, xử lý lỗi]
+        Model[PRISMA MODEL<br/>prisma/schema.prisma<br/>14 models, query DB]
+        View[VIEW<br/>*.ejs<br/>template HTML server-side]
+
+        Browser[Client Browser]
+    end
+
+    Browser -->|HTTP Request| Router -->|ánh xạ| Controller
+    Controller -->|gọi| Service
+    Service -->|query| Model
+    Model -->|dữ liệu| Service
+    Service -->|kết quả| Controller
+    Controller -->|render| View
+    View -->|HTML Response| Browser
+
+    Controller -. không query DB trực tiếp .-> Model</pre>
+</div>
+<div class="card">
+  <h2>8. 10. ACTIVITY DIAGRAM — THANH TOÁN PAYOS</h2>
+  <pre class="mermaid">%%{init: {"flowchart": {"nodeSpacing": 70, "rankSpacing": 70}}}%%
+flowchart TD
+    A([Bắt đầu]) --> B[Chọn phương thức PayOS]
+    B --> C[Xác nhận đơn hàng]
+    C --> D[Tạo Order status=pending]
+    D --> E[Gọi PayOS API tạo payment]
+    E --> F[PayOS trả về checkoutUrl]
+    F --> G[Redirect user sang PayOS]
+    G --> H{User thanh toán?}
+    H -->|Thành công| I[PayOS gửi webhook PAID]
+    H -->|Hủy bỏ| J[Cập nhật Order cancelled]
+    I --> K[Verify signature HMAC-SHA256]
+    K --> L[Update Order completed]
+    L --> M[Xóa giỏ hàng]
+    M --> N[Gửi email xác nhận]
+    N --> O[Auto-assign voucher nếu đủ điều kiện]
+    O --> P([Hoàn tất])
+    J --> P</pre>
+</div>
+<div class="card">
+  <h2>9. 11. SEQUENCE DIAGRAM — ĐĂNG NHẬP</h2>
+  <pre class="mermaid">sequenceDiagram
+    autonumber
+    participant C as Client Browser
+    participant S as Express Server
+    participant D as SQL Server
+
+    C->>S: POST /auth/login {username, password}
+    S->>D: findFirst(user by username)
+    D-->>S: {user data}
+    S->>S: bcrypt.compare(password)
+    alt Sai mật khẩu
+        S-->>C: Lỗi "Sai tên đăng nhập hoặc mật khẩu"
+    else Đúng
+        S->>S: req.session.userId = user.id
+        S-->>C: Redirect "/"
+    end</pre>
+</div>
+<div class="card">
+  <h2>10. 13. LUỒNG XỬ LÝ ĐĂNG NHẬP</h2>
+  <pre class="mermaid">%%{init: {"flowchart": {"nodeSpacing": 70, "rankSpacing": 70}}}%%
+flowchart LR
+    B[Browser] -->|POST /auth/login| RC["auth routes<br/>controller"]
+    RC -->|"login()"| S["auth service"]
+    S -->|findFirst User| DB[(Prisma / SQL Server)]
+    DB -->|user data| S
+    S -->|bcrypt compare| V{Đúng?}
+    V -->|sai| B
+    V -->|đúng| SES[set session + redirect]</pre>
+</div>
+<div class="card">
+  <h2>11. 14. LUỒNG THANH TOÁN PAYOS (ĐẦY ĐỦ)</h2>
+  <pre class="mermaid">sequenceDiagram
+    autonumber
+    participant B as Browser
+    participant C as CheckoutService
+    participant P as PayOS API
+    participant E as Gmail SMTP
+    participant D as DB
+
+    B->>C: POST /checkout {payos, voucher}
+    C->>C: validate voucher + tính tổng
+    C->>D: createOrder()
+    C->>P: generatePaymentUrl() → POST /v2/payment-requests
+    P-->>C: {checkoutUrl}
+    C-->>B: Redirect sang PayOS
+
+    rect rgb(245, 245, 245)
+        note over P: User thanh toán trên PayOS
+        P->>C: POST /webhook {orderCode, status}
+        C->>C: verify signature
+        C->>D: updateOrder() / deleteCart()
+        C->>E: sendEmail()
+        C->>D: autoAssignVoucher()
+    end
+
+    B->>C: GET /payment/return
+    C-->>B: Render checkout_success</pre>
+</div>
+<div class="card">
+  <h2>12. 15. SƠ ĐỒ PHÂN RÃ CHỨC NĂNG</h2>
+  <pre class="mermaid">%%{init: {"flowchart": {"nodeSpacing": 20, "rankSpacing": 20, "curve": "basis"}}}%%
+flowchart TD
+    subgraph SYS["HỆ THỐNG QUẢN LÝ BÁN CÀ PHÊ TRỰC TUYẾN"]
+
+        subgraph KH["1. QUẢN LÝ KHÁCH HÀNG"]
+            subgraph AUTH["1.1 Tài khoản"]
+                A1["Đăng ký"]
+                subgraph A2["Đăng nhập"]
+                    A21["Mật khẩu"]
+                    A22["Google"]
+                end
+                A3["Đăng xuất"]
+                A4["Quên mật khẩu"]
+                A5["Cập nhật hồ sơ"]
+            end
+
+            subgraph CART["1.2 Giỏ hàng"]
+                C1["Xem giỏ hàng"]
+                C2["Thêm sản phẩm vào giỏ"]
+                C3["Cập nhật số lượng"]
+                C4["Xóa sản phẩm khỏi giỏ"]
+            end
+
+            subgraph REV["1.3 Đánh giá sản phẩm"]
+                R1["Gửi đánh giá"]
+                R2["Xem đánh giá"]
+                R3["Kiểm tra đã đánh giá"]
+            end
+        end
+
+        subgraph KD["2. QUẢN LÝ KINH DOANH"]
+            subgraph PROD["2.1 Sản phẩm"]
+                P1["Xem & tìm kiếm sản phẩm"]
+                P2["Xem chi tiết + tùy chỉnh món"]
+                P3["Thêm sản phẩm"]
+                P4["Cập nhật sản phẩm"]
+                P5["Xóa sản phẩm"]
+            end
+
+            subgraph PROMO["2.2 Khuyến mãi"]
+                PR1["Danh sách khuyến mãi"]
+                PR2["Tạo khuyến mãi"]
+                PR3["Xóa khuyến mãi"]
+                subgraph PR4["Áp dụng giảm giá"]
+                    PR41["buyXGetY"]
+                    PR42["percentOff"]
+                    PR43["freeItem"]
+                end
+            end
+
+            subgraph VOU["2.3 Voucher"]
+                V1["Danh sách voucher"]
+                V2["Tạo voucher"]
+                V3["Xóa voucher"]
+                V4["Voucher của tôi"]
+                V5["Gán voucher cho user"]
+                V6["Auto-assign theo quy tắc"]
+            end
+
+            subgraph BS["2.4 Best seller"]
+                B1["Tự động tính toán"]
+                B2["Cấu hình"]
+                B3["Override"]
+            end
+        end
+
+        subgraph DH["3. QUẢN LÝ ĐƠN HÀNG & THANH TOÁN"]
+            subgraph ORD["3.1 Đơn hàng"]
+                O1["Xác nhận đơn hàng"]
+                O2["Lịch sử đơn hàng"]
+                O3["Cập nhật trạng thái"]
+                O4["Cập nhật ghi chú"]
+                O5["Xóa đơn hàng"]
+            end
+
+            subgraph PAY["3.2 Thanh toán"]
+                PY0["COD"]
+                subgraph PY["PayOS"]
+                    PY1["Tạo payment URL"]
+                    PY2["Xử lý webhook"]
+                    PY3["Kiểm tra trạng thái"]
+                    PY4["Hủy thanh toán"]
+                    PY5["Xử lý return / cancel"]
+                end
+            end
+        end
+
+        subgraph HT["4. QUẢN LÝ HỆ THỐNG"]
+            subgraph DASH["4.1 Dashboard thống kê"]
+                D1["Doanh thu"]
+                D2["Đơn hàng"]
+                D3["Sản phẩm bán chạy"]
+            end
+
+            subgraph USR["4.2 Người dùng"]
+                U1["Xem danh sách người dùng"]
+                U2["Xóa người dùng"]
+            end
+        end
+
+    end</pre>
+</div>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: true, theme: "default" });
+  const render = async () => {
+    for (const el of document.querySelectorAll("pre.mermaid")) {
+      try { await mermaid.parse(el.textContent); }
+      catch (e) { el.outerHTML = '<div class="err">' + el.textContent.replace(/</g, "&lt;") + "</div>"; }
+    }
+  };
+  await render();
+  mermaid.run();
+</script>
+<script>
+  // Cây thư mục: bấm vào tên thư mục để xổ / thu gọn
+  document.querySelectorAll(".tree li.dir > .d").forEach(el => {
+    el.addEventListener("click", () => el.parentElement.classList.toggle("closed"));
+  });
+</script>
+</body>
+</html>
