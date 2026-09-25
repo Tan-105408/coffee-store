@@ -11,6 +11,7 @@ const { requestLogger, errorMiddleware } = require("./utils/logger");
 const app = express();
 
 // Disable ETag to prevent admin stale-cache issues
+app.set("trust proxy", 1);
 app.set("etag", false);
 
 // Set up view engine
